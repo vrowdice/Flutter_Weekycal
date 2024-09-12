@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 //week container size setting
-int minTime = 0;
+int minTime = 6;
 int maxTime = 24;
 
 double weekTimeSizeX = 100.0;
-double weekTimeSizeY = 560.0;
+double weekTimeSizeY = 450.0;
 double weekContainerSizeX = 450.0;
-double weekContainerSizeY = 570.0;
-double weekInfoSizeY = 40.0;
+double weekContainerSizeY = 400.0;
+double weekInfoSizeY = 30.0;
 
 var nowWeekInfo = [Week, Week, Week, Week, Week, Week, Week];
 
@@ -41,6 +41,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        resizeToAvoidBottomInset : false,
           bottomNavigationBar: BottomNavigationBar(
             onTap: (int index) {
               switch (index) {
@@ -52,9 +53,9 @@ class MainApp extends StatelessWidget {
               }
             },
             items: [
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
                   icon: Icon(Icons.schedule), label: 'Schedule'),
-              const BottomNavigationBarItem(
+              BottomNavigationBarItem(
                   icon: Icon(Icons.settings), label: 'Setting')
             ],
           ),
@@ -103,12 +104,6 @@ class MainApp extends StatelessWidget {
                                   const WeekBtnColumn()
                               ],
                             ),
-                            Row(
-                              children: [
-                                for (int i = 0; i < 7; i++)
-                                  const StatedWeekBtnColumn()
-                              ],
-                            ),
                             SizedBox(
                               width: 100,
                               child: ElevatedButton(
@@ -154,7 +149,7 @@ class TimeText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: (weekContainerSizeY - 41) / maxTime,
+      height: (weekContainerSizeY - 41) / (maxTime - minTime) + 0.6,
       child: Text(
         '${index.toString()} : 00',
       ),
@@ -182,44 +177,16 @@ class WeekStateBlock extends StatelessWidget {
   }
 }
 
-class StatedWeekBtnColumn extends StatefulWidget {
-  const StatedWeekBtnColumn({super.key});
-
-  @override
-  State<StatedWeekBtnColumn> createState() => _StatedWeekBtnColumnState();
-}
-
-class _StatedWeekBtnColumnState extends State<StatedWeekBtnColumn> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-
-class StatedWeekBtn extends StatefulWidget {
-  const StatedWeekBtn({super.key});
-
-  @override
-  State<StatedWeekBtn> createState() => _StatedWeekBtnState();
-}
-
-class _StatedWeekBtnState extends State<StatedWeekBtn> {
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-
 class WeekBtnColumn extends StatelessWidget {
   const WeekBtnColumn({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return SizedBox( //이거 문제 있음
       width: weekContainerSizeX / 7,
-      height: weekContainerSizeY - 42,
+      height: weekContainerSizeY - weekInfoSizeY,
       child: Column(
-        children: [for (int i = 0; i < 24; i++) const WeekBtn()],
+        children: [for (int i = 0; i < maxTime - minTime; i++) const WeekBtn()],
       ),
     );
   }
@@ -237,7 +204,7 @@ class WeekBtnState extends State<WeekBtn> {
   Widget build(BuildContext context) {
     return Container(
         width: weekContainerSizeX / 7,
-        height: (weekContainerSizeY - weekInfoSizeY - 2) / maxTime,
+        height: (weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime),
         decoration:
             BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
         child: ElevatedButton(
