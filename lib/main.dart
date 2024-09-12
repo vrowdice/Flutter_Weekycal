@@ -13,16 +13,16 @@ double weekInfoSizeY = 30.0;
 
 var nowWeekInfo = [Week, Week, Week, Week, Week, Week, Week];
 
-class Week{
+class Week {
   //schedule list
   List<Schedule> schedule = [];
 }
 
-class Schedule{
+class Schedule {
   String name = '';
 
   int listIndex = 0;
-  
+
   int startTime = 0;
 
   int endTime = 0;
@@ -41,7 +41,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        resizeToAvoidBottomInset : false,
+          resizeToAvoidBottomInset: false,
           bottomNavigationBar: BottomNavigationBar(
             onTap: (int index) {
               switch (index) {
@@ -82,7 +82,7 @@ class MainApp extends StatelessWidget {
                   ),
                   Container(
                     width: weekContainerSizeX + 2,
-                    height: weekContainerSizeY,
+                    height: weekContainerSizeY + 2,
                     decoration: BoxDecoration(border: Border.all(width: 1.0)),
                     child: Column(
                       children: [
@@ -179,15 +179,10 @@ class WeekStateBlock extends StatelessWidget {
 
 class WeekBtnColumn extends StatelessWidget {
   const WeekBtnColumn({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return SizedBox( //이거 문제 있음
-      width: weekContainerSizeX / 7,
-      height: weekContainerSizeY - weekInfoSizeY,
-      child: Column(
-        children: [for (int i = 0; i < maxTime - minTime; i++) const WeekBtn()],
-      ),
+    return Column(
+      children: [for (int i = 0; i < maxTime - minTime; i++) const WeekBtn()],
     );
   }
 }
@@ -199,12 +194,13 @@ class WeekBtn extends StatefulWidget {
   State<WeekBtn> createState() => WeekBtnState();
 }
 
+//weekly calendar button in schedule settings
 class WeekBtnState extends State<WeekBtn> {
   @override
   Widget build(BuildContext context) {
     return Container(
         width: weekContainerSizeX / 7,
-        height: (weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime),
+        height: ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)),
         decoration:
             BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
         child: ElevatedButton(
@@ -216,6 +212,7 @@ class WeekBtnState extends State<WeekBtn> {
   }
 }
 
+//month string to month index
 String convertWeekIntToStr(int argIndex) {
   switch (argIndex) {
     case 0:
