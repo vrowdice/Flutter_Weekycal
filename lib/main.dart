@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dataClass.dart';
 //import 'package:flutter/widgets.dart';
 
 //week container size setting
 int minTime = 6;
 int maxTime = 24;
+double minTimeMin = 0.0;
+double maxTimeMin = 0.0;
 
 //schedule block size
 double weekTimeSizeX = 100.0;
@@ -11,6 +15,8 @@ double weekTimeSizeY = 450.0;
 double weekContainerSizeX = 400.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
+double weekBtnHight = 0.0;
+double weekBtnHightForMin = 0.0;
 
 //textfield size
 double textFieldSizeX = 120;
@@ -22,41 +28,47 @@ String textfieldStartTime = "";
 String textfieldEndTime = "";
 
 //week data array
-var schedule = List.generate(7, (index) {
+var scheduleData = List.generate(7, (index) {
   Week week = Week();
   week.index = index;
   return week;
 });
 
-class Week {
-  //week index
-  int index = 0;
-  //schedule list
-  List<Schedule> scheduleInfo = [];
-}
-
-class Schedule {
-  //schedule index
-  int index = -1;
-  //schedule name
-  String name = "";
-  //schedule start time
-  int startTime = 0;
-  //schedule end time
-  int endTime = 0;
-  //schedule explanation
-  String explanation = "";
-}
+Schedule nowSchedule = new Schedule();
 
 void main() {
   //sample schedule
-  Schedule sampleSchedule = Schedule();
-  sampleSchedule.name = "new schedule";
-  sampleSchedule.startTime = 600;
-  sampleSchedule.endTime = 720;
-  sampleSchedule.explanation = "exp";
+  Schedule sampleSchedule1 = Schedule();
+  sampleSchedule1.index = 0;
+  sampleSchedule1.name = "new schedule";
+  sampleSchedule1.startTime = 600;
+  sampleSchedule1.endTime = 720;
+  sampleSchedule1.explanation = "exp";
 
-  schedule[2].scheduleInfo.add(sampleSchedule);
+  scheduleData[2].scheduleInfo.add(sampleSchedule1);
+
+  Schedule sampleSchedule2 = Schedule();
+  sampleSchedule2.index = 1;
+  sampleSchedule2.name = "new schedule";
+  sampleSchedule2.startTime = 780;
+  sampleSchedule2.endTime = 900;
+  sampleSchedule2.explanation = "exp";
+
+  scheduleData[2].scheduleInfo.add(sampleSchedule2);
+
+  Schedule sampleSchedule3 = Schedule();
+  sampleSchedule3.index = 2;
+  sampleSchedule3.name = "new schedule";
+  sampleSchedule3.startTime = 900;
+  sampleSchedule3.endTime = 1080;
+  sampleSchedule3.explanation = "exp";
+
+  scheduleData[2].scheduleInfo.add(sampleSchedule3);
+
+  minTimeMin = minTime * 60;
+  maxTimeMin = maxTimeMin * 60;
+  weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
+  weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
 
   runApp(const MainApp());
 }
@@ -156,7 +168,7 @@ class MainApp extends StatelessWidget {
               //set schedule info block
               Container(
                   width: weekContainerSizeX + 50,
-                  height: weekContainerSizeY / 3,
+                  height: weekContainerSizeY / 2.5,
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 247, 242, 249),
                     borderRadius: BorderRadius.circular(12),
@@ -194,6 +206,7 @@ class MainApp extends StatelessWidget {
                           )
                         ],
                       ),
+                      scheduleControlRow()
                     ],
                   ))
             ],
@@ -272,7 +285,7 @@ class WeekBtnState extends State<WeekBtn> {
   Widget build(BuildContext context) {
     return Container(
         width: weekContainerSizeX / 7,
-        height: ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)),
+        height: weekBtnHight,
         decoration:
             BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
         child: ElevatedButton(
@@ -295,45 +308,57 @@ class ScheduleBtnColumn extends StatefulWidget {
 class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
   @override
   Widget build(BuildContext context) {
-    List<Widget> weekWidgetList = []; // 초기화 시 List<Widget> 사용
-    List<int> scheduleInfoList = [];
-    List<int> scheduleStartTimeList = [];
-    List<int> scheduleEndTimeList = [];
+    List<Widget> weekWidgetList = []; // Initialize an empty list of widgets
 
-    // 일정 정보 추출
-    for (int i = 0; i < schedule[widget.week].scheduleInfo.length; i++) {
-      scheduleInfoList.add(schedule[widget.week].scheduleInfo[i].index);
-      scheduleStartTimeList
-          .add(schedule[widget.week].scheduleInfo[i].startTime);
-      scheduleEndTimeList.add(schedule[widget.week].scheduleInfo[i].endTime);
-    }
-
-    if (schedule[widget.week].scheduleInfo.length <= 0) {
-      print(widget.week.toString());
+    if (scheduleData[widget.week].scheduleInfo.isEmpty) {
+      // If there are no schedules, add an empty container
       weekWidgetList.add(Container(width: weekContainerSizeX / 7));
     } else {
-      //여기에 빈 공간 처리 넣어야 함
+      // If schedules exist
+      double sumHeight = 0.0; // Accumulated height of the widgets
+      double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
-      for (int i = 0; i < scheduleStartTimeList.length; i++) {
+      for (var info in scheduleData[widget.week].scheduleInfo) {
+        // Calculate the height for the empty space
+        double emptyBoxHeight =
+            info.startTime * weekBtnHightForMin - minHeightOffset - sumHeight;
+        // Calculate the height of the schedule button
+        double scheduleBtnHeight =
+            weekBtnHightForMin * (info.endTime - info.startTime);
+
+        // Add empty space if its height is greater than 0
+        if (emptyBoxHeight > 0) {
+          weekWidgetList.add(SizedBox(height: emptyBoxHeight));
+        }
+
+        print(info.index);
+
+        // Add the schedule button
         weekWidgetList.add(ScheduleBtn(
             week: widget.week,
-            height:
-                (((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)) *
-                    (scheduleEndTimeList[i] / 60 -
-                        scheduleStartTimeList[i] / 60))));
+            scheduleIndex: info.index,
+            height: scheduleBtnHeight));
+        sumHeight +=
+            emptyBoxHeight + scheduleBtnHeight; // Update the accumulated height
       }
     }
 
+    // Return the final widget list wrapped in a Column
     return Column(
-      children: weekWidgetList, // 최종적으로 구성된 위젯 리스트 반환
+      children: weekWidgetList,
     );
   }
 }
 
 class ScheduleBtn extends StatefulWidget {
   final int week;
+  final int scheduleIndex;
   final double height;
-  const ScheduleBtn({super.key, required this.week, required this.height});
+  const ScheduleBtn(
+      {super.key,
+      required this.week,
+      required this.scheduleIndex,
+      required this.height});
 
   @override
   State<ScheduleBtn> createState() => _ScheduleBtnState();
@@ -343,18 +368,46 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        width: weekContainerSizeX / 7,
-        height: widget.height,
-        decoration:
-            BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
-        child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(0))),
-            onPressed: () {},
-            child: Container()));
+      width: weekContainerSizeX / 7,
+      height: widget.height,
+      decoration: BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(0),
+          ),
+        ),
+        onPressed: () {
+          setState(() {
+            // Ensure that nowSchedule is a mutable state and changes trigger UI update
+            nowSchedule.name = scheduleData[widget.week]
+                .scheduleInfo[widget.scheduleIndex]
+                .name;
+            nowSchedule.explanation = scheduleData[widget.week]
+                .scheduleInfo[widget.scheduleIndex]
+                .explanation;
+            nowSchedule.startTime = scheduleData[widget.week]
+                .scheduleInfo[widget.scheduleIndex]
+                .startTime;
+            nowSchedule.endTime = scheduleData[widget.week]
+                .scheduleInfo[widget.scheduleIndex]
+                .endTime;
+          });
+
+          // Debugging: Print the updated nowSchedule
+          print("Updated nowSchedule: ${nowSchedule.name}, ${nowSchedule.startTime}, ${nowSchedule.endTime}");
+        },
+        child: Center(
+          child: Text(
+            "${nowSchedule.name}", // This will help visualize the button's clickable content
+            style: TextStyle(color: Colors.black, fontSize: 10.0),
+          ),
+        ),
+      ),
+    );
   }
 }
+
 
 class ScheduleInfoTextField extends StatefulWidget {
   final int index;
@@ -365,64 +418,149 @@ class ScheduleInfoTextField extends StatefulWidget {
 }
 
 class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
+  late TextEditingController _controller;
+
   @override
-  Widget build(BuildContext context) {
-    String text = "";
+  void initState() {
+    super.initState();
+    _initializeController();
+  }
+
+  @override
+  void didUpdateWidget(ScheduleInfoTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // nowSchedule이 변경될 때마다 컨트롤러를 갱신
+    _initializeController();
+  }
+
+  void _initializeController() {
+    // nowSchedule의 값에 맞춰 컨트롤러 초기화
     switch (widget.index) {
       case 0:
-        text = "Name";
+        _controller = TextEditingController(text: nowSchedule.name);
+        break;
       case 1:
-        text = "Start Time";
+        _controller = TextEditingController(text: nowSchedule.startTime.toString());
+        break;
       case 2:
-        text = "Explanation";
+        _controller = TextEditingController(text: nowSchedule.explanation);
+        break;
       case 3:
-        text = "End Time";
+        _controller = TextEditingController(text: nowSchedule.endTime.toString());
+        break;
       default:
-        text = "";
+        _controller = TextEditingController();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    String label = "";
+    switch (widget.index) {
+      case 0:
+        label = "Name";
+        break;
+      case 1:
+        label = "Start Time";
+        break;
+      case 2:
+        label = "Explanation";
+        break;
+      case 3:
+        label = "End Time";
+        break;
+      default:
+        label = "";
     }
 
     return Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 70,
-              child: Text(
-                  style: const TextStyle(fontSize: 12),
-                  textAlign: TextAlign.center,
-                  text),
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              style: const TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+              label,
             ),
-            SizedBox(
-              width: textFieldSizeX,
-              height: textFieldSizeY,
-              child: TextField(
-                maxLength: 12,
-                decoration: const InputDecoration(
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 15.0, horizontal: 0.0),
-                ),
-                cursorHeight: 20,
-                textAlign: TextAlign.left,
-                onChanged: (value) {
-                  setState(() {
-                    switch (widget.index) {
-                      case 0:
-                        textfieldName = value;
-                      case 1:
-                        textfieldStartTime = value;
-                      case 2:
-                        textfieldExplanation = value;
-                      case 3:
-                        textfieldEndTime = value;
-                      default:
-                        text = "";
-                    }
-                  });
-                },
+          ),
+          SizedBox(
+            width: textFieldSizeX,
+            height: textFieldSizeY,
+            child: TextField(
+              controller: _controller, // TextEditingController 연결
+              maxLength: 12,
+              keyboardType: (widget.index == 1 || widget.index == 3)
+                  ? TextInputType.number // Allow number input only for startTime and endTime
+                  : TextInputType.text, // Default for name and explanation
+              inputFormatters: (widget.index == 1 || widget.index == 3)
+                  ? [
+                      FilteringTextInputFormatter.digitsOnly
+                    ] // Only digits allowed
+                  : [], // No restrictions for other fields
+              decoration: const InputDecoration(
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 15.0, horizontal: 0.0),
+                counterText: "", // Disable the character count display
               ),
+              cursorHeight: 20,
+              textAlign: TextAlign.left,
+              onChanged: (value) {
+                setState(() {
+                  switch (widget.index) {
+                    case 0: // name should be a string
+                      nowSchedule.name = value;
+                      break;
+                    case 1: // startTime should be an integer
+                      nowSchedule.startTime = int.tryParse(value) ?? 0;
+                      break;
+                    case 2: // explanation should be a string
+                      nowSchedule.explanation = value;
+                      break;
+                    case 3: // endTime should be an integer
+                      nowSchedule.endTime = int.tryParse(value) ?? 0;
+                      break;
+                    default:
+                      break;
+                  }
+                });
+              },
             ),
-          ],
-        ));
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class scheduleControlRow extends StatefulWidget {
+  const scheduleControlRow({super.key});
+
+  @override
+  State<scheduleControlRow> createState() => _scheduleControlRowState();
+}
+
+class _scheduleControlRowState extends State<scheduleControlRow> {
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+      SizedBox(
+          width: weekContainerSizeX / 2.5,
+          height: weekContainerSizeY / 11,
+          child: ElevatedButton(
+              onPressed: () {
+                setState(() {});
+              },
+              child: const Text("Apply, Del")))
+    ]);
   }
 }
 
