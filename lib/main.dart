@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
 import 'dataClass.dart';
+import 'tools.dart';
+import 'popup.dart';
+
 //import 'package:flutter/widgets.dart';
 
 //week container size setting
@@ -12,7 +17,7 @@ double maxTimeMin = 0.0;
 //schedule block size
 double weekTimeSizeX = 100.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 400.0;
+double weekContainerSizeX = 450.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
@@ -21,11 +26,21 @@ double weekBtnHightForMin = 0.0;
 //textfield size
 double textFieldSizeX = 120;
 double textFieldSizeY = 25;
+
 //textfield info
 String textfieldName = "";
 String textfieldExplanation = "";
 String textfieldStartTime = "";
 String textfieldEndTime = "";
+
+//text field controllers
+List<TextEditingController> textFieldControllers =
+    List.generate(2, (index) => TextEditingController());
+//time input field controllers
+final ValueNotifier<TimeOfDay> startTimeNotifier =
+    ValueNotifier(TimeOfDay(hour: 9, minute: 0));
+final ValueNotifier<TimeOfDay> endTimeNotifier =
+    ValueNotifier(TimeOfDay(hour: 10, minute: 0));
 
 //week data array
 var scheduleData = List.generate(7, (index) {
@@ -34,34 +49,42 @@ var scheduleData = List.generate(7, (index) {
   return week;
 });
 
-Schedule nowSchedule = new Schedule();
+//now setting schedule
+Schedule nowTimeSchedule = Schedule();
+int nowWeekIndex = 0;
+int nowScheduleIndex = 0;
+
+// sort schedules as start time
+void sortSchedulesByStartTime(List<Schedule> schedules) {
+  schedules.sort((a, b) => a.startTime.compareTo(b.startTime));
+}
 
 void main() {
   //sample schedule
   Schedule sampleSchedule1 = Schedule();
   sampleSchedule1.index = 0;
-  sampleSchedule1.name = "new schedule";
+  sampleSchedule1.name = "new schedule0";
   sampleSchedule1.startTime = 600;
   sampleSchedule1.endTime = 720;
-  sampleSchedule1.explanation = "exp";
+  sampleSchedule1.explanation = "exp0";
 
   scheduleData[2].scheduleInfo.add(sampleSchedule1);
 
   Schedule sampleSchedule2 = Schedule();
   sampleSchedule2.index = 1;
-  sampleSchedule2.name = "new schedule";
+  sampleSchedule2.name = "new schedule1";
   sampleSchedule2.startTime = 780;
   sampleSchedule2.endTime = 900;
-  sampleSchedule2.explanation = "exp";
+  sampleSchedule2.explanation = "exp1";
 
   scheduleData[2].scheduleInfo.add(sampleSchedule2);
 
   Schedule sampleSchedule3 = Schedule();
   sampleSchedule3.index = 2;
-  sampleSchedule3.name = "new schedule";
+  sampleSchedule3.name = "new schedule2";
   sampleSchedule3.startTime = 900;
   sampleSchedule3.endTime = 1080;
-  sampleSchedule3.explanation = "exp";
+  sampleSchedule3.explanation = "exp2";
 
   scheduleData[2].scheduleInfo.add(sampleSchedule3);
 
@@ -154,7 +177,7 @@ class MainApp extends StatelessWidget {
                               children: [
                                 for (int i = 0; i < 7; i++)
                                   ScheduleBtnColumn(
-                                    week: i,
+                                    weekIndex: i,
                                   )
                               ],
                             ),
@@ -168,7 +191,7 @@ class MainApp extends StatelessWidget {
               //set schedule info block
               Container(
                   width: weekContainerSizeX + 50,
-                  height: weekContainerSizeY / 2.5,
+                  height: weekContainerSizeY / 2.3,
                   decoration: BoxDecoration(
                     color: const Color.fromARGB(255, 247, 242, 249),
                     borderRadius: BorderRadius.circular(12),
@@ -181,32 +204,42 @@ class MainApp extends StatelessWidget {
                     ],
                   ),
                   child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Padding(
-                        padding: EdgeInsets.all(5.0),
-                        child: Text(
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            "Schedule Info"),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(5.0),
+                            child: Text(
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.0),
+                                "Schedule Info"),
+                          ),
+                          scheduleControlRow()
+                        ],
                       ),
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          Padding(
+                            padding: EdgeInsets.all(5),
+                            child: TimePickerColum(),
+                          ),
                           Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               ScheduleInfoTextField(index: 0),
+                              SizedBox(
+                                width: 25,
+                              ),
                               ScheduleInfoTextField(index: 1)
                             ],
                           ),
-                          Column(
-                            children: [
-                              ScheduleInfoTextField(index: 2),
-                              ScheduleInfoTextField(index: 3)
-                            ],
-                          )
                         ],
                       ),
-                      scheduleControlRow()
                     ],
                   ))
             ],
@@ -240,9 +273,7 @@ class WeekStateBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Center(
-        child: Text(convertWeekIntToStr(index)),
-      ),
+      child: Text(convertWeekIntToStr(index)),
       width: weekContainerSizeX / 7,
       height: weekInfoSizeY,
       decoration:
@@ -261,7 +292,7 @@ class WeekBtnColumn extends StatelessWidget {
       children: [
         for (int i = minTime; i < maxTime; i++)
           WeekBtn(
-            week: week,
+            weekIndex: week,
             time: i,
           )
       ],
@@ -271,9 +302,9 @@ class WeekBtnColumn extends StatelessWidget {
 
 //week setting, info button
 class WeekBtn extends StatefulWidget {
-  final int week;
+  final int weekIndex;
   final int time;
-  const WeekBtn({super.key, required this.week, required this.time});
+  const WeekBtn({super.key, required this.weekIndex, required this.time});
 
   @override
   State<WeekBtn> createState() => WeekBtnState();
@@ -292,14 +323,21 @@ class WeekBtnState extends State<WeekBtn> {
             style: ElevatedButton.styleFrom(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(0))),
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                startTimeNotifier.value =
+                    TimeOfDay(hour: widget.time, minute: 0);
+                endTimeNotifier.value =
+                    TimeOfDay(hour: widget.time + 1, minute: 0);
+              });
+            },
             child: Container()));
   }
 }
 
 class ScheduleBtnColumn extends StatefulWidget {
-  final int week;
-  const ScheduleBtnColumn({super.key, required this.week});
+  final int weekIndex;
+  const ScheduleBtnColumn({super.key, required this.weekIndex});
 
   @override
   State<ScheduleBtnColumn> createState() => _ScheduleBtnColumnState();
@@ -310,7 +348,7 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
   Widget build(BuildContext context) {
     List<Widget> weekWidgetList = []; // Initialize an empty list of widgets
 
-    if (scheduleData[widget.week].scheduleInfo.isEmpty) {
+    if (scheduleData[widget.weekIndex].scheduleInfo.isEmpty) {
       // If there are no schedules, add an empty container
       weekWidgetList.add(Container(width: weekContainerSizeX / 7));
     } else {
@@ -318,7 +356,7 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
       double sumHeight = 0.0; // Accumulated height of the widgets
       double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
-      for (var info in scheduleData[widget.week].scheduleInfo) {
+      for (var info in scheduleData[widget.weekIndex].scheduleInfo) {
         // Calculate the height for the empty space
         double emptyBoxHeight =
             info.startTime * weekBtnHightForMin - minHeightOffset - sumHeight;
@@ -331,11 +369,9 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
           weekWidgetList.add(SizedBox(height: emptyBoxHeight));
         }
 
-        print(info.index);
-
         // Add the schedule button
         weekWidgetList.add(ScheduleBtn(
-            week: widget.week,
+            weekIndex: widget.weekIndex,
             scheduleIndex: info.index,
             height: scheduleBtnHeight));
         sumHeight +=
@@ -351,12 +387,12 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
 }
 
 class ScheduleBtn extends StatefulWidget {
-  final int week;
+  final int weekIndex;
   final int scheduleIndex;
   final double height;
   const ScheduleBtn(
       {super.key,
-      required this.week,
+      required this.weekIndex,
       required this.scheduleIndex,
       required this.height});
 
@@ -370,7 +406,8 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
     return Container(
       width: weekContainerSizeX / 7,
       height: widget.height,
-      decoration: BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
+      decoration:
+          BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           shape: RoundedRectangleBorder(
@@ -378,29 +415,48 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
           ),
         ),
         onPressed: () {
+          String name = scheduleData[widget.weekIndex]
+              .scheduleInfo[widget.scheduleIndex]
+              .name;
+          String explanation = scheduleData[widget.weekIndex]
+              .scheduleInfo[widget.scheduleIndex]
+              .explanation;
+          int startTime = scheduleData[widget.weekIndex]
+              .scheduleInfo[widget.scheduleIndex]
+              .startTime;
+          int endTime = scheduleData[widget.weekIndex]
+              .scheduleInfo[widget.scheduleIndex]
+              .endTime;
+
+          nowTimeSchedule.name = name;
+          nowTimeSchedule.explanation = explanation;
+          nowTimeSchedule.startTime = startTime;
+          nowTimeSchedule.endTime = endTime;
+
           setState(() {
-            // Ensure that nowSchedule is a mutable state and changes trigger UI update
-            nowSchedule.name = scheduleData[widget.week]
-                .scheduleInfo[widget.scheduleIndex]
-                .name;
-            nowSchedule.explanation = scheduleData[widget.week]
-                .scheduleInfo[widget.scheduleIndex]
-                .explanation;
-            nowSchedule.startTime = scheduleData[widget.week]
-                .scheduleInfo[widget.scheduleIndex]
-                .startTime;
-            nowSchedule.endTime = scheduleData[widget.week]
-                .scheduleInfo[widget.scheduleIndex]
-                .endTime;
+            // 텍스트 필드의 컨트롤러만 업데이트
+            textFieldControllers[0].text = name;
+            textFieldControllers[1].text = explanation;
+            startTimeNotifier.value =
+                TimeOfDay(hour: startTime ~/ 60, minute: startTime % 60);
+            endTimeNotifier.value =
+                TimeOfDay(hour: endTime ~/ 60, minute: endTime % 60);
           });
 
-          // Debugging: Print the updated nowSchedule
-          print("Updated nowSchedule: ${nowSchedule.name}, ${nowSchedule.startTime}, ${nowSchedule.endTime}");
+          nowWeekIndex = widget.weekIndex;
+          nowScheduleIndex = widget.scheduleIndex;
         },
         child: Center(
-          child: Text(
-            "${nowSchedule.name}", // This will help visualize the button's clickable content
-            style: TextStyle(color: Colors.black, fontSize: 10.0),
+          child: OverflowBox(
+            maxWidth: double.infinity, // 텍스트가 컨테이너를 초과할 수 있도록 함
+            child: Text(
+              "${scheduleData[widget.weekIndex].scheduleInfo[widget.scheduleIndex].name}", // 텍스트
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 10.0,
+                overflow: TextOverflow.visible, // 텍스트가 넘칠 수 있도록 설정
+              ),
+            ),
           ),
         ),
       ),
@@ -408,9 +464,9 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
   }
 }
 
-
 class ScheduleInfoTextField extends StatefulWidget {
   final int index;
+
   const ScheduleInfoTextField({super.key, required this.index});
 
   @override
@@ -418,66 +474,26 @@ class ScheduleInfoTextField extends StatefulWidget {
 }
 
 class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
-  late TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeController();
-  }
-
-  @override
-  void didUpdateWidget(ScheduleInfoTextField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // nowSchedule이 변경될 때마다 컨트롤러를 갱신
-    _initializeController();
-  }
-
-  void _initializeController() {
-    // nowSchedule의 값에 맞춰 컨트롤러 초기화
-    switch (widget.index) {
-      case 0:
-        _controller = TextEditingController(text: nowSchedule.name);
-        break;
-      case 1:
-        _controller = TextEditingController(text: nowSchedule.startTime.toString());
-        break;
-      case 2:
-        _controller = TextEditingController(text: nowSchedule.explanation);
-        break;
-      case 3:
-        _controller = TextEditingController(text: nowSchedule.endTime.toString());
-        break;
-      default:
-        _controller = TextEditingController();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     String label = "";
+    String initialValue = "";
+
+    // 각 필드에 해당하는 레이블과 초기값 설정
     switch (widget.index) {
       case 0:
         label = "Name";
         break;
       case 1:
-        label = "Start Time";
-        break;
-      case 2:
         label = "Explanation";
-        break;
-      case 3:
-        label = "End Time";
         break;
       default:
         label = "";
+        initialValue = "";
     }
+
+    // 전역 리스트에서 해당 index의 TextEditingController를 사용
+    textFieldControllers[widget.index].text = initialValue;
 
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -486,46 +502,40 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
           SizedBox(
             width: 80,
             child: Text(
-              style: const TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
               label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
           ),
           SizedBox(
             width: textFieldSizeX,
             height: textFieldSizeY,
             child: TextField(
-              controller: _controller, // TextEditingController 연결
               maxLength: 12,
               keyboardType: (widget.index == 1 || widget.index == 3)
-                  ? TextInputType.number // Allow number input only for startTime and endTime
-                  : TextInputType.text, // Default for name and explanation
+                  ? TextInputType.number // 숫자 입력
+                  : TextInputType.text, // 텍스트 입력
               inputFormatters: (widget.index == 1 || widget.index == 3)
-                  ? [
-                      FilteringTextInputFormatter.digitsOnly
-                    ] // Only digits allowed
-                  : [], // No restrictions for other fields
+                  ? [FilteringTextInputFormatter.digitsOnly]
+                  : [], // 숫자 필드만 숫자 제한
               decoration: const InputDecoration(
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 15.0, horizontal: 0.0),
-                counterText: "", // Disable the character count display
+                counterText: "", // 글자수 표시 제거
               ),
               cursorHeight: 20,
               textAlign: TextAlign.left,
+              controller:
+                  textFieldControllers[widget.index], // 전역 텍스트 필드 컨트롤러 사용
               onChanged: (value) {
                 setState(() {
+                  // `nowSchedule` 업데이트
                   switch (widget.index) {
-                    case 0: // name should be a string
-                      nowSchedule.name = value;
+                    case 0:
+                      nowTimeSchedule.name = value;
                       break;
-                    case 1: // startTime should be an integer
-                      nowSchedule.startTime = int.tryParse(value) ?? 0;
-                      break;
-                    case 2: // explanation should be a string
-                      nowSchedule.explanation = value;
-                      break;
-                    case 3: // endTime should be an integer
-                      nowSchedule.endTime = int.tryParse(value) ?? 0;
+                    case 1:
+                      nowTimeSchedule.explanation = value;
                       break;
                     default:
                       break;
@@ -540,6 +550,161 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
   }
 }
 
+class TimePickerColum extends StatefulWidget {
+  const TimePickerColum({super.key});
+
+  @override
+  State<TimePickerColum> createState() => _TimePickerColumState();
+}
+
+class _TimePickerColumState extends State<TimePickerColum> {
+  Color startTimeButtonColor = Colors.blue; // 시작 시간 버튼 색
+  Color endTimeButtonColor = Colors.green; // 종료 시간 버튼 색
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // 시작 시간 ElevatedButton
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: startTimeButtonColor, // 색 설정
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          onPressed: () async {
+            TimeOfDay? pickedStartTime = await showTimePicker(
+              context: context,
+              initialTime: startTimeNotifier.value,
+            );
+
+            if (pickedStartTime != null &&
+                pickedStartTime != startTimeNotifier.value) {
+              if (pickedStartTime.hour < 6 || pickedStartTime.hour >= 24) {
+                showWarningDialog(
+                  context,
+                  'Please select a time between 6 AM and 12 AM.',
+                );
+                return;
+              }
+
+              startTimeNotifier.value = pickedStartTime;
+            }
+
+            nowTimeSchedule.startTime = startTimeNotifier.value.hour * 60 +
+                startTimeNotifier.value.minute;
+          },
+          child: ValueListenableBuilder<TimeOfDay>(
+            valueListenable: startTimeNotifier,
+            builder: (context, startTime, _) {
+              return Text(
+                'Start Time: ${startTime.format(context)}',
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              );
+            },
+          ),
+        ),
+        // 종료 시간 ElevatedButton
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: endTimeButtonColor, // 색 설정
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 30),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          onPressed: () async {
+            TimeOfDay? pickedEndTime = await showTimePicker(
+              context: context,
+              initialTime: endTimeNotifier.value,
+            );
+
+            if (pickedEndTime != null &&
+                pickedEndTime != endTimeNotifier.value) {
+              if (pickedEndTime.hour < 6 || pickedEndTime.hour >= 24) {
+                showWarningDialog(
+                  context,
+                  'Please select a time between 6 AM and 12 AM.',
+                );
+                return;
+              }
+
+              if (pickedEndTime.hour < startTimeNotifier.value.hour ||
+                  (pickedEndTime.hour == startTimeNotifier.value.hour &&
+                      pickedEndTime.minute <= startTimeNotifier.value.minute)) {
+                showWarningDialog(
+                  context,
+                  'End Time cannot be earlier than Start Time.',
+                );
+                return;
+              }
+
+              nowTimeSchedule.endTime = endTimeNotifier.value.hour * 60 +
+                  endTimeNotifier.value.minute;
+              endTimeNotifier.value = pickedEndTime;
+            }
+          },
+          child: ValueListenableBuilder<TimeOfDay>(
+            valueListenable: endTimeNotifier,
+            builder: (context, endTime, _) {
+              return Text(
+                'End Time: ${endTime.format(context)}',
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 10), // 간격
+        // 색 선택 버튼 (종료 시간 버튼 색)
+        ElevatedButton(
+          onPressed: () {
+            showColorPicker(context, false);
+          },
+          child: const Text("Choose Button Color"),
+        ),
+      ],
+    );
+  }
+
+  // 색 선택기 호출 함수
+  void showColorPicker(BuildContext context, bool isStartTime) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Pick a color"),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: isStartTime ? startTimeButtonColor : endTimeButtonColor,
+              onColorChanged: (Color color) {
+                setState(() {
+                  if (isStartTime) {
+                    startTimeButtonColor = color;
+                  } else {
+                    endTimeButtonColor = color;
+                  }
+                });
+              },
+              showLabel: true,
+              pickerAreaHeightPercent: 0.8,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
 class scheduleControlRow extends StatefulWidget {
   const scheduleControlRow({super.key});
@@ -551,37 +716,29 @@ class scheduleControlRow extends StatefulWidget {
 class _scheduleControlRowState extends State<scheduleControlRow> {
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-      SizedBox(
-          width: weekContainerSizeX / 2.5,
-          height: weekContainerSizeY / 11,
-          child: ElevatedButton(
-              onPressed: () {
-                setState(() {});
-              },
-              child: const Text("Apply, Del")))
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      Padding(
+        padding: EdgeInsets.all(5),
+        child: SizedBox(
+            width: weekContainerSizeX / 3.5,
+            height: weekContainerSizeY / 11,
+            child: ElevatedButton(
+                onPressed: () {
+                  setState(() {});
+                },
+                child: const Text("Apply"))),
+      ),
+      Padding(
+        padding: EdgeInsets.all(5),
+        child: SizedBox(
+            width: weekContainerSizeX / 3.5,
+            height: weekContainerSizeY / 11,
+            child: ElevatedButton(
+                onPressed: () {
+                  setState(() {});
+                },
+                child: const Text("Del"))),
+      )
     ]);
-  }
-}
-
-//month string to month index
-String convertWeekIntToStr(int argIndex) {
-  switch (argIndex) {
-    case 0:
-      return 'Sun';
-    case 1:
-      return 'Mon';
-    case 2:
-      return 'Tue';
-    case 3:
-      return 'Wed';
-    case 4:
-      return 'Thu';
-    case 5:
-      return 'Fri';
-    case 6:
-      return 'Sat';
-    default:
-      return '';
   }
 }
