@@ -1,5 +1,3 @@
-import 'dataClass.dart';
-
 //month string to month index
 String convertWeekIntToStr(int argIndex) {
   switch (argIndex) {

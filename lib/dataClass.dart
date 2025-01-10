@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Week {
   //week index
   int index = 0;
@@ -16,4 +18,6 @@ class Schedule {
   int endTime = 0;
   //schedule explanation
   String explanation = "";
+  //button color
+  Color btnColor = Colors.white;
 }
