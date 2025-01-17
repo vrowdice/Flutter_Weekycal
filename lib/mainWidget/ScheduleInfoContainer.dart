@@ -12,7 +12,7 @@ class ScheduleInfoContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         width: weekContainerSizeX + 50,
-        height: weekContainerSizeY / 2.3,
+        height: weekContainerSizeY / 2,
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 247, 242, 249),
           borderRadius: BorderRadius.circular(12),
@@ -24,10 +24,10 @@ class ScheduleInfoContainer extends StatelessWidget {
             ),
           ],
         ),
-        child: const Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Padding(
@@ -46,9 +46,24 @@ class ScheduleInfoContainer extends StatelessWidget {
               children: [
                 Padding(
                   padding: EdgeInsets.all(5),
-                  child: TimePickerColum(),
+                  child: Container(
+                    width: 210,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: const Color.fromARGB(255, 247, 242, 249),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 5,
+                          offset: Offset(1, 1),
+                        ),
+                      ],
+                    ),
+                    child: const TimePickerColum(),
+                  ),
                 ),
-                Column(
+                const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ScheduleInfoTextField(index: 0),
@@ -62,7 +77,6 @@ class ScheduleInfoContainer extends StatelessWidget {
   }
 }
 
-// TextField widget for schedule information input
 class ScheduleInfoTextField extends StatefulWidget {
   final int index;
 
@@ -76,7 +90,6 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
   @override
   Widget build(BuildContext context) {
     String label = "";
-    String initialValue = "";
 
     switch (widget.index) {
       case 0:
@@ -87,11 +100,10 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
         break;
       default:
         label = "";
-        initialValue = "";
     }
 
-    // Set initial value in the TextEditingController
-    textFieldControllers[widget.index].text = initialValue;
+    // 전역변수로 사용되는 textFieldControllers에서 컨트롤러 참조
+    TextEditingController controller = textFieldControllers[widget.index];
 
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -106,36 +118,22 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
             ),
           ),
           SizedBox(
-            width: textFieldSizeX,
-            height: textFieldSizeY,
+            width: 180, // 적절한 크기 설정
+            height: 25, // 적절한 높이 설정
             child: TextField(
               maxLength: 12,
-              keyboardType: (widget.index == 0 || widget.index == 1)
-                  ? TextInputType.number
-                  : TextInputType.text,
-              inputFormatters: (widget.index == 0 || widget.index == 1)
-                  ? [FilteringTextInputFormatter.digitsOnly]
-                  : [],
+              keyboardType: TextInputType.text,
               decoration: const InputDecoration(
-                contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 0.0),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 15.0, horizontal: 0.0),
                 counterText: "",
               ),
               cursorHeight: 15,
               textAlign: TextAlign.left,
-              controller: textFieldControllers[widget.index],
+              controller: controller, // 전역 변수 사용
               onChanged: (value) {
                 setState(() {
-                  // Update `nowSchedule`
-                  switch (widget.index) {
-                    case 0:
-                      nowSchedule.name = value;
-                      break;
-                    case 1:
-                      nowSchedule.explanation = value;
-                      break;
-                    default:
-                      break;
-                  }
+                  // 상태 변경이 필요하면 여기에 추가 작업
                 });
               },
             ),
@@ -193,9 +191,6 @@ class _TimePickerColumState extends State<TimePickerColum> {
 
                 startTimeNotifier.value = pickedStartTime;
               }
-
-              nowSchedule.startTime = startTimeNotifier.value.hour * 60 +
-                  startTimeNotifier.value.minute;
             },
             child: ValueListenableBuilder<TimeOfDay>(
               valueListenable: startTimeNotifier,
@@ -247,8 +242,6 @@ class _TimePickerColumState extends State<TimePickerColum> {
                   return;
                 }
 
-                nowSchedule.endTime = endTimeNotifier.value.hour * 60 +
-                    endTimeNotifier.value.minute;
                 endTimeNotifier.value = pickedEndTime;
               }
             },
@@ -265,26 +258,87 @@ class _TimePickerColumState extends State<TimePickerColum> {
         ),
         const SizedBox(height: 10), // Spacing
         // Button to choose color (end time button color)
-        Row(
-          children: [
-            const Text("Button Color: "),
-            ElevatedButton(
+        ButtonColorPickerRow()
+      ],
+    );
+  }
+}
+
+// Row for restore and delete schedule buttons
+class ScheduleControlRow extends StatefulWidget {
+  const ScheduleControlRow({super.key});
+
+  @override
+  State<ScheduleControlRow> createState() => _ScheduleControlRowState();
+}
+
+class _ScheduleControlRowState extends State<ScheduleControlRow> {
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+      Padding(
+        padding: const EdgeInsets.all(5),
+        child: SizedBox(
+            width: weekContainerSizeX / 3.5,
+            height: weekContainerSizeY / 11,
+            child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    applyNowSchedule();
+                    print("object");
+                  });
+                },
+                child: const Text("Apply"))),
+      ),
+      Padding(
+        padding: const EdgeInsets.all(5),
+        child: SizedBox(
+            width: weekContainerSizeX / 3.5,
+            height: weekContainerSizeY / 11,
+            child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    deleteNowSchedule();
+                  });
+                },
+                child: const Text("Del"))),
+      )
+    ]);
+  }
+}
+
+class ButtonColorPickerRow extends StatefulWidget {
+  const ButtonColorPickerRow({Key? key}) : super(key: key);
+
+  @override
+  State<ButtonColorPickerRow> createState() => _ButtonColorPickerRowState();
+}
+
+class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Text("Button Color: "),
+        // ValueListenableBuilder를 사용하여 colorButtonColor 값 변경 시 UI 업데이트
+        ValueListenableBuilder<Color>(
+          valueListenable: colorButtonColor, // 값을 리스닝하는 위젯
+          builder: (context, color, child) {
+            return ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: nowSchedule.btnColor,
+                backgroundColor: color, // colorButtonColor.value 사용
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(0),
                 ),
               ),
               onPressed: () async {
-                Color selectedColor = await showColorPickerDialog(context, nowSchedule.btnColor);
-                setState(() {
-                  nowSchedule.btnColor = selectedColor; // Update the color
-                });
-                print(nowSchedule.btnColor);
+                Color selectedColor = await showColorPickerDialog(context, color);
+                // 색상 선택 후 value 변경
+                colorButtonColor.value = selectedColor;
               },
               child: const Text(""),
-            ),
-          ],
+            );
+          },
         ),
       ],
     );
@@ -339,49 +393,5 @@ class ColorPickerDialog extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-
-// Row for restore and delete schedule buttons
-class ScheduleControlRow extends StatefulWidget {
-  const ScheduleControlRow({super.key});
-
-  @override
-  State<ScheduleControlRow> createState() => _ScheduleControlRowState();
-}
-
-class _ScheduleControlRowState extends State<ScheduleControlRow> {
-  @override
-  Widget build(BuildContext context) {
-    return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-      Padding(
-        padding: const EdgeInsets.all(5),
-        child: SizedBox(
-            width: weekContainerSizeX / 3.5,
-            height: weekContainerSizeY / 11,
-            child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    applyNowSchedule();
-                    print("object");
-                  });
-                },
-                child: const Text("Apply"))),
-      ),
-      Padding(
-        padding: const EdgeInsets.all(5),
-        child: SizedBox(
-            width: weekContainerSizeX / 3.5,
-            height: weekContainerSizeY / 11,
-            child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    deleteNowSchedule();
-                  });
-                },
-                child: const Text("Del"))),
-      )
-    ]);
   }
 }

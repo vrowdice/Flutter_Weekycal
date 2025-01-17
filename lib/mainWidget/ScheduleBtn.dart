@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:weekycal/main.dart';
 
-
-
 class ScheduleBtnColumn extends StatefulWidget {
   final int weekIndex;
   const ScheduleBtnColumn({super.key, required this.weekIndex});
@@ -104,12 +102,6 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
               .scheduleInfo[widget.scheduleIndex]
               .endTime;
 
-          nowSchedule.name = name;
-          nowSchedule.explanation = explanation;
-          nowSchedule.startTime = startTime;
-          nowSchedule.endTime = endTime;
-          nowSchedule.btnColor = btnColor;
-
           setState(() {
             // 텍스트 필드의 컨트롤러만 업데이트
             textFieldControllers[0].text = name;
@@ -118,6 +110,7 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
                 TimeOfDay(hour: startTime ~/ 60, minute: startTime % 60);
             endTimeNotifier.value =
                 TimeOfDay(hour: endTime ~/ 60, minute: endTime % 60);
+            colorButtonColor.value = btnColor;
           });
 
           nowWeekIndex = widget.weekIndex;

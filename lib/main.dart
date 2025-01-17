@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'dataClass.dart';
-import 'tools.dart';
+import 'converter.dart';
 
 import 'mainWidget/weekBtn.dart';
 import 'mainWidget/ScheduleBtn.dart';
@@ -15,8 +15,6 @@ double minTimeMin = 0.0;
 double maxTimeMin = 0.0;
 
 //week container size setting
-
-
 //schedule block size
 double weekTimeSizeX = 100.0;
 double weekTimeSizeY = 450.0;
@@ -41,7 +39,6 @@ double timeSelectBtnSizeX = 200.0;
 double timeSelectBtnSizeY = 45.0;
 
 //now setting schedule
-Schedule nowSchedule = Schedule();
 int nowWeekIndex = -1;
 int nowScheduleIndex = -1;
 
@@ -51,13 +48,19 @@ void sortSchedulesByStartTime(List<Schedule> schedules) {
 }
 
 //text field controllers
-List<TextEditingController> textFieldControllers =
-    List.generate(2, (index) => TextEditingController());
+List<TextEditingController> textFieldControllers = [
+  TextEditingController(),
+  TextEditingController(),
+  // Add controllers for other text fields if necessary
+];
 //time input field controllers
 final ValueNotifier<TimeOfDay> startTimeNotifier =
     ValueNotifier(TimeOfDay(hour: 9, minute: 0));
 final ValueNotifier<TimeOfDay> endTimeNotifier =
     ValueNotifier(TimeOfDay(hour: 10, minute: 0));
+// Global variable to manage button color
+final ValueNotifier<Color> colorButtonColor =
+    ValueNotifier<Color>(Colors.white);
 
 //week data array
 var scheduleData = List.generate(7, (index) {
@@ -73,6 +76,7 @@ void main() {
   sampleSchedule1.name = "new schedule0";
   sampleSchedule1.startTime = 600;
   sampleSchedule1.endTime = 720;
+  sampleSchedule1.btnColor = Colors.blue;
   sampleSchedule1.explanation = "exp0";
 
   scheduleData[2].scheduleInfo.add(sampleSchedule1);
@@ -82,6 +86,7 @@ void main() {
   sampleSchedule2.name = "new schedule1";
   sampleSchedule2.startTime = 780;
   sampleSchedule2.endTime = 900;
+  sampleSchedule2.btnColor = Colors.red;
   sampleSchedule2.explanation = "exp1";
 
   scheduleData[2].scheduleInfo.add(sampleSchedule2);
@@ -103,17 +108,29 @@ void main() {
   runApp(const MainApp());
 }
 
-void applyNowSchedule(){
-  if(nowWeekIndex < 0 || nowScheduleIndex < 0){
+void applyNowSchedule() {
+  if (nowWeekIndex < 0 || nowScheduleIndex < 0) {
     return;
   }
+
+  Schedule nowSchedule = Schedule(); 
+
+  nowSchedule.name = textFieldControllers[0].text;
+  nowSchedule.explanation = textFieldControllers[1].text;
+  nowSchedule.startTime =
+      startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
+  nowSchedule.endTime =
+      endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
+  nowSchedule.btnColor = colorButtonColor.value;
+
   scheduleData[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
 }
 
-void deleteNowSchedule(){
-  if(nowWeekIndex < 0 || nowScheduleIndex < 0){
+void deleteNowSchedule() {
+  if (nowWeekIndex < 0 || nowScheduleIndex < 0) {
     return;
   }
+
   scheduleData[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
 }
 
