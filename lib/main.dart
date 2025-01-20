@@ -53,6 +53,11 @@ List<TextEditingController> textFieldControllers = [
   TextEditingController(),
   // Add controllers for other text fields if necessary
 ];
+
+//if this flag turn true than sync schadule and turn again to false
+final ValueNotifier<bool> isSyncWithSchaduleData = ValueNotifier(false);
+//if is new schadule = true
+final ValueNotifier<bool> isNewSchadule = ValueNotifier(false);
 //time input field controllers
 final ValueNotifier<TimeOfDay> startTimeNotifier =
     ValueNotifier(TimeOfDay(hour: 9, minute: 0));
@@ -79,7 +84,7 @@ void main() {
   sampleSchedule1.btnColor = Colors.blue;
   sampleSchedule1.explanation = "exp0";
 
-  scheduleData[2].scheduleInfo.add(sampleSchedule1);
+  scheduleData[3].scheduleInfo.add(sampleSchedule1);
 
   Schedule sampleSchedule2 = Schedule();
   sampleSchedule2.index = 1;
@@ -89,7 +94,7 @@ void main() {
   sampleSchedule2.btnColor = Colors.red;
   sampleSchedule2.explanation = "exp1";
 
-  scheduleData[2].scheduleInfo.add(sampleSchedule2);
+  scheduleData[3].scheduleInfo.add(sampleSchedule2);
 
   Schedule sampleSchedule3 = Schedule();
   sampleSchedule3.index = 2;
@@ -98,7 +103,7 @@ void main() {
   sampleSchedule3.endTime = 1080;
   sampleSchedule3.explanation = "exp2";
 
-  scheduleData[2].scheduleInfo.add(sampleSchedule3);
+  scheduleData[3].scheduleInfo.add(sampleSchedule3);
 
   minTimeMin = minTime * 60;
   maxTimeMin = maxTimeMin * 60;
@@ -109,12 +114,11 @@ void main() {
 }
 
 void applyNowSchedule() {
-  if (nowWeekIndex < 0 || nowScheduleIndex < 0) {
+  if (nowWeekIndex < 0) {
     return;
   }
 
-  Schedule nowSchedule = Schedule(); 
-
+  Schedule nowSchedule = Schedule();
   nowSchedule.name = textFieldControllers[0].text;
   nowSchedule.explanation = textFieldControllers[1].text;
   nowSchedule.startTime =
@@ -123,7 +127,19 @@ void applyNowSchedule() {
       endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
   nowSchedule.btnColor = colorButtonColor.value;
 
-  scheduleData[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
+  if (isNewSchadule.value) {
+    scheduleData[nowWeekIndex].scheduleInfo.add(nowSchedule);
+  } else {
+    if(nowScheduleIndex < 0)
+    {
+      return;
+    }
+    scheduleData[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
+  }
+
+  print(startTimeNotifier.value.hour.toString() + " " + startTimeNotifier.value.minute.toString());
+
+  SyncData();
 }
 
 void deleteNowSchedule() {
@@ -132,6 +148,28 @@ void deleteNowSchedule() {
   }
 
   scheduleData[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
+
+  SyncData();
+}
+
+Future<void> SyncData() async {
+  if (isSyncWithSchaduleData.value) {
+    print("Already syncing data...");
+    return;
+  }
+
+  isSyncWithSchaduleData.value = true;
+  print("Starting data sync...");
+
+  try {
+    // 실제 동기화 작업 수행
+    await Future.delayed(Duration(milliseconds: 500));
+    print("Data sync complete.");
+  } catch (e) {
+    print("Sync error: $e");
+  } finally {
+    isSyncWithSchaduleData.value = false;
+  }
 }
 
 //main
@@ -211,14 +249,19 @@ class MainApp extends StatelessWidget {
                               ],
                             ),
                             //week schedule check and resetting button columns
-                            Row(
-                              children: [
-                                for (int i = 0; i < week; i++)
-                                  ScheduleBtnColumn(
-                                    weekIndex: i,
-                                  )
-                              ],
-                            ),
+                            ValueListenableBuilder(
+                                valueListenable: isSyncWithSchaduleData,
+                                builder: (context, isSyncWithData, child) {
+                                  return Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      for (int i = 0; i < week; i++)
+                                        ScheduleBtnColumn(
+                                          weekIndex: i,
+                                        )
+                                    ],
+                                  );
+                                })
                           ],
                         )
                       ],

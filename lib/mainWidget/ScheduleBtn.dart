@@ -17,13 +17,19 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
 
     if (scheduleData[widget.weekIndex].scheduleInfo.isEmpty) {
       // If there are no schedules, add an empty container
-      weekWidgetList.add(Container(width: weekContainerSizeX / 7));
+      return SizedBox(
+        width: weekContainerSizeX / 7,
+      );
     } else {
       // If schedules exist
       double sumHeight = 0.0; // Accumulated height of the widgets
       double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
-      for (var info in scheduleData[widget.weekIndex].scheduleInfo) {
+      for (int i = 0;
+          i < scheduleData[widget.weekIndex].scheduleInfo.length;
+          i++) {
+        var info = scheduleData[widget.weekIndex].scheduleInfo[i];
+
         // Calculate the height for the empty space
         double emptyBoxHeight =
             info.startTime * weekBtnHightForMin - minHeightOffset - sumHeight;
@@ -33,13 +39,15 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
 
         // Add empty space if its height is greater than 0
         if (emptyBoxHeight > 0) {
-          weekWidgetList.add(SizedBox(height: emptyBoxHeight));
+          weekWidgetList.add(SizedBox(
+            height: emptyBoxHeight,
+          ));
         }
 
         // Add the schedule button
         weekWidgetList.add(ScheduleBtn(
           weekIndex: widget.weekIndex,
-          scheduleIndex: info.index,
+          scheduleIndex: i, // Use the index here as well
           height: scheduleBtnHeight,
         ));
         sumHeight +=
@@ -102,6 +110,9 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
               .scheduleInfo[widget.scheduleIndex]
               .endTime;
 
+          nowWeekIndex = widget.weekIndex;
+          nowScheduleIndex = widget.scheduleIndex;
+
           setState(() {
             // 텍스트 필드의 컨트롤러만 업데이트
             textFieldControllers[0].text = name;
@@ -111,10 +122,9 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
             endTimeNotifier.value =
                 TimeOfDay(hour: endTime ~/ 60, minute: endTime % 60);
             colorButtonColor.value = btnColor;
-          });
 
-          nowWeekIndex = widget.weekIndex;
-          nowScheduleIndex = widget.scheduleIndex;
+            isNewSchadule.value = false;
+          });
         },
         child: Center(
           child: OverflowBox(

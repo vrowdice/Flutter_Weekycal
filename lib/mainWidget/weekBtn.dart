@@ -45,10 +45,13 @@ class WeekBtnState extends State<WeekBtn> {
                     borderRadius: BorderRadius.circular(0))),
             onPressed: () {
               setState(() {
+                nowWeekIndex = widget.weekIndex;
                 startTimeNotifier.value =
                     TimeOfDay(hour: widget.time, minute: 0);
                 endTimeNotifier.value =
                     TimeOfDay(hour: widget.time + 1, minute: 0);
+
+                isNewSchadule.value = true;
               });
             },
             child: Container()));

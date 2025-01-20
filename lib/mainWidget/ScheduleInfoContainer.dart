@@ -27,17 +27,14 @@ class ScheduleInfoContainer extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 Padding(
-                  padding: EdgeInsets.all(5.0),
-                  child: Text(
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 20.0),
-                      "Schedule Info"),
-                ),
-                ScheduleControlRow()
+                    padding: const EdgeInsets.all(5.0),
+                    child: ContainerTitleText(
+                        isNewScheduleNotifier: isNewSchadule)),
+                const ScheduleControlRow()
               ],
             ),
             Row(
@@ -45,7 +42,7 @@ class ScheduleInfoContainer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
-                  padding: EdgeInsets.all(5),
+                  padding: const EdgeInsets.all(5),
                   child: Container(
                     width: 210,
                     height: 120,
@@ -74,6 +71,32 @@ class ScheduleInfoContainer extends StatelessWidget {
             ),
           ],
         ));
+  }
+}
+
+class ContainerTitleText extends StatefulWidget {
+  final ValueNotifier<bool> isNewScheduleNotifier;
+  const ContainerTitleText({super.key, required this.isNewScheduleNotifier});
+
+  @override
+  State<ContainerTitleText> createState() => _ContainerTitleTextState();
+}
+
+class _ContainerTitleTextState extends State<ContainerTitleText> {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: widget.isNewScheduleNotifier,
+      builder: (context, isNewSchedule, child) {
+        return Text(
+          isNewSchedule ? "New Schedule Info" : "Schedule Info",
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20.0,
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -283,10 +306,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    applyNowSchedule();
-                    print("object");
-                  });
+                  applyNowSchedule();
                 },
                 child: const Text("Apply"))),
       ),
@@ -297,9 +317,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
                 onPressed: () {
-                  setState(() {
-                    deleteNowSchedule();
-                  });
+                  deleteNowSchedule();
                 },
                 child: const Text("Del"))),
       )
@@ -332,7 +350,8 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
                 ),
               ),
               onPressed: () async {
-                Color selectedColor = await showColorPickerDialog(context, color);
+                Color selectedColor =
+                    await showColorPickerDialog(context, color);
                 // 색상 선택 후 value 변경
                 colorButtonColor.value = selectedColor;
               },
@@ -346,7 +365,8 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
 }
 
 // Color Picker Dialog
-Future<Color> showColorPickerDialog(BuildContext context, Color initialColor) async {
+Future<Color> showColorPickerDialog(
+    BuildContext context, Color initialColor) async {
   Color selectedColor = initialColor;
   await showDialog(
     context: context,
