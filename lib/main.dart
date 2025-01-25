@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dataClass.dart';
 import 'converter.dart';
 
+import 'package:weekycal/popup.dart';
 import 'mainWidget/weekBtn.dart';
 import 'mainWidget/ScheduleBtn.dart';
 import 'mainWidget/ScheduleInfoContainer.dart';
@@ -113,34 +114,49 @@ void main() {
   runApp(const MainApp());
 }
 
-void applyNowSchedule() {
+void applyNowSchedule(BuildContext context) {
   if (nowWeekIndex < 0) {
     return;
   }
 
-  Schedule nowSchedule = Schedule();
-  nowSchedule.name = textFieldControllers[0].text;
-  nowSchedule.explanation = textFieldControllers[1].text;
-  nowSchedule.startTime =
-      startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
-  nowSchedule.endTime =
-      endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
-  nowSchedule.btnColor = colorButtonColor.value;
+  final startTimeInMinutes = startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
+  final endTimeInMinutes = endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
 
+  // Function to check if the time overlaps with existing schedules
+  bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
+    return (scheduleStart < startTimeInMinutes && scheduleEnd > startTimeInMinutes) ||
+           (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
+  }
+
+  // Check for time overlaps in the existing schedule data
+  for (var schedule in scheduleData[nowWeekIndex].scheduleInfo) {
+    if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
+      showWarningDialog(context, "The schedule overlaps with an existing one.");
+      return;
+    }
+  }
+
+  // Create a new schedule object with the data from the input fields
+  Schedule nowSchedule = Schedule()
+    ..name = textFieldControllers[0].text
+    ..explanation = textFieldControllers[1].text
+    ..startTime = startTimeInMinutes
+    ..endTime = endTimeInMinutes
+    ..btnColor = colorButtonColor.value;
+
+  // Add or update the schedule depending on whether it's a new schedule or not
   if (isNewSchadule.value) {
     scheduleData[nowWeekIndex].scheduleInfo.add(nowSchedule);
   } else {
-    if(nowScheduleIndex < 0)
-    {
+    if (nowScheduleIndex < 0) {
       return;
     }
     scheduleData[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
   }
 
-  print(startTimeNotifier.value.hour.toString() + " " + startTimeNotifier.value.minute.toString());
-
   SyncData();
 }
+
 
 void deleteNowSchedule() {
   if (nowWeekIndex < 0 || nowScheduleIndex < 0) {
@@ -154,15 +170,13 @@ void deleteNowSchedule() {
 
 Future<void> SyncData() async {
   if (isSyncWithSchaduleData.value) {
-    print("Already syncing data...");
     return;
   }
 
   isSyncWithSchaduleData.value = true;
-  print("Starting data sync...");
 
   try {
-    // 실제 동기화 작업 수행
+    // Running the synchronization process
     await Future.delayed(Duration(milliseconds: 500));
     print("Data sync complete.");
   } catch (e) {
@@ -172,7 +186,7 @@ Future<void> SyncData() async {
   }
 }
 
-//main
+// main
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -180,99 +194,103 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-          resizeToAvoidBottomInset: false,
-          bottomNavigationBar: BottomNavigationBar(
-            onTap: (int index) {
-              switch (index) {
-                case 0:
-                  break;
-                case 1:
-                  break;
-                default:
-              }
-            },
-            items: [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.schedule), label: 'Schedule'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.settings), label: 'Setting')
-            ],
-          ),
-          body: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  //set time text
-                  SizedBox(
-                    width: weekTimeSizeX - 50,
-                    height: weekContainerSizeY + 20,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: weekTimeSizeX,
-                          height: weekInfoSizeY - 10,
-                        ),
-                        for (int i = minTime; i < maxTime + 1; i++)
-                          TimeText(index: i)
-                      ],
-                    ),
-                  ),
-                  //set schedule block
-                  Container(
-                    width: weekContainerSizeX + 2,
-                    height: weekContainerSizeY + 2,
-                    decoration: BoxDecoration(border: Border.all(width: 1.0)),
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Row(
-                            children: [
-                              for (int i = 0; i < week; i++)
-                                WeekStateBlock(
-                                  index: i,
-                                )
-                            ],
+        body: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Set time text
+                    SizedBox(
+                      width: weekTimeSizeX - 50,
+                      height: weekContainerSizeY + 20,
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: weekTimeSizeX,
+                            height: weekInfoSizeY - 10,
                           ),
-                        ),
-                        Stack(
-                          children: [
-                            //week setting button columns
-                            Row(
+                          for (int i = minTime; i < maxTime + 1; i++)
+                            TimeText(index: i)
+                        ],
+                      ),
+                    ),
+                    // Set schedule block
+                    Container(
+                      width: weekContainerSizeX + 2,
+                      height: weekContainerSizeY + 2,
+                      decoration: BoxDecoration(border: Border.all(width: 1.0)),
+                      child: Column(
+                        children: [
+                          Center(
+                            child: Row(
                               children: [
                                 for (int i = 0; i < week; i++)
-                                  WeekBtnColumn(
-                                    week: i,
+                                  WeekStateBlock(
+                                    index: i,
                                   )
                               ],
                             ),
-                            //week schedule check and resetting button columns
-                            ValueListenableBuilder(
-                                valueListenable: isSyncWithSchaduleData,
-                                builder: (context, isSyncWithData, child) {
-                                  return Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      for (int i = 0; i < week; i++)
-                                        ScheduleBtnColumn(
-                                          weekIndex: i,
-                                        )
-                                    ],
-                                  );
-                                })
-                          ],
-                        )
-                      ],
+                          ),
+                          Stack(
+                            children: [
+                              // Week setting button columns
+                              Row(
+                                children: [
+                                  for (int i = 0; i < week; i++)
+                                    WeekBtnColumn(
+                                      week: i,
+                                    )
+                                ],
+                              ),
+                              // Week schedule check and resetting button columns
+                              ValueListenableBuilder(
+                                  valueListenable: isSyncWithSchaduleData,
+                                  builder: (context, isSyncWithData, child) {
+                                    return Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        for (int i = 0; i < week; i++)
+                                          ScheduleBtnColumn(
+                                            weekIndex: i,
+                                          )
+                                      ],
+                                    );
+                                  }),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
+                  ],
+                ),
+                // Set schedule info block
+                const ScheduleInfoContainer()
+              ],
+            ),
+            // Setting button
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Container(
+                width: 50,
+                height: 50,
+                child: IconButton(
+                  icon: Icon(
+                    Icons.settings,
+                    size: 30,
                   ),
-                ],
+                  onPressed: () {},
+                ),
               ),
-              //set schedule info block
-              const ScheduleInfoContainer()
-            ],
-          )),
+            )
+          ],
+        ),
+      ),
     );
   }
 }

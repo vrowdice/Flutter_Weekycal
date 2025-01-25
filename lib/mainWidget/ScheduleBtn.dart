@@ -30,6 +30,10 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
           i++) {
         var info = scheduleData[widget.weekIndex].scheduleInfo[i];
 
+        if(info.startTime / 60 < minTime || info.endTime / 60 > maxTime){
+          continue;
+        }
+
         // Calculate the height for the empty space
         double emptyBoxHeight =
             info.startTime * weekBtnHightForMin - minHeightOffset - sumHeight;
@@ -83,6 +87,19 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
     Color btnColor = scheduleData[widget.weekIndex]
         .scheduleInfo[widget.scheduleIndex]
         .btnColor;
+    bool explanationVisible = true;
+
+    if (scheduleData[widget.weekIndex]
+                .scheduleInfo[widget.scheduleIndex]
+                .endTime -
+            scheduleData[widget.weekIndex]
+                .scheduleInfo[widget.scheduleIndex]
+                .startTime <
+        120) {
+      explanationVisible = false;
+    } else {
+      explanationVisible = true;
+    }
 
     return Container(
       width: weekContainerSizeX / 7,
@@ -126,19 +143,33 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
             isNewSchadule.value = false;
           });
         },
-        child: Center(
-          child: OverflowBox(
+        child: OverflowBox(
             maxWidth: double.infinity, // 텍스트가 컨테이너를 초과할 수 있도록 함
-            child: Text(
-              "${scheduleData[widget.weekIndex].scheduleInfo[widget.scheduleIndex].name}", // 텍스트
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 10.0,
-                overflow: TextOverflow.visible, // 텍스트가 넘칠 수 있도록 설정
-              ),
-            ),
-          ),
-        ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "${scheduleData[widget.weekIndex].scheduleInfo[widget.scheduleIndex].name}", // 텍스트
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10.0,
+                    overflow: TextOverflow.visible, // 텍스트가 넘칠 수 있도록 설정
+                  ),
+                ),
+                Visibility(
+                  visible: explanationVisible,
+                  child: Text(
+                    "${scheduleData[widget.weekIndex].scheduleInfo[widget.scheduleIndex].explanation}",
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 10.0,
+                      overflow: TextOverflow.visible,
+                    ),
+                  ),
+                )
+              ],
+            )),
       ),
     );
   }

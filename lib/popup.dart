@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// 경고 다이얼로그를 재사용할 수 있는 메소드
+// warning dialog met
 void showWarningDialog(BuildContext context, String message) {
   showDialog(
     context: context,

@@ -38,8 +38,6 @@ class ScheduleInfoContainer extends StatelessWidget {
               ],
             ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
                   padding: const EdgeInsets.all(5),
@@ -88,11 +86,14 @@ class _ContainerTitleTextState extends State<ContainerTitleText> {
     return ValueListenableBuilder<bool>(
       valueListenable: widget.isNewScheduleNotifier,
       builder: (context, isNewSchedule, child) {
-        return Text(
-          isNewSchedule ? "New Schedule Info" : "Schedule Info",
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20.0,
+        return SizedBox(
+          width: 200,
+          child: Text(
+            isNewSchedule ? "New Schedule Info" : "Schedule Info",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 23.0,
+            ),
           ),
         );
       },
@@ -144,7 +145,7 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
             width: 180, // 적절한 크기 설정
             height: 25, // 적절한 높이 설정
             child: TextField(
-              maxLength: 12,
+              maxLength: 20,
               keyboardType: TextInputType.text,
               decoration: const InputDecoration(
                 contentPadding:
@@ -183,6 +184,7 @@ class _TimePickerColumState extends State<TimePickerColum> {
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Start Time ElevatedButton
         SizedBox(
@@ -305,10 +307,20 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
             width: weekContainerSizeX / 3.5,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
-                onPressed: () {
-                  applyNowSchedule();
-                },
-                child: const Text("Apply"))),
+              onPressed: () {
+                applyNowSchedule(context);
+              },
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(8), // 여기서 원하는 정도의 둥근 정도 조절
+                ),
+              ),
+              child: const Text(
+                "Apply",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            )),
       ),
       Padding(
         padding: const EdgeInsets.all(5),
@@ -319,7 +331,16 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
                 onPressed: () {
                   deleteNowSchedule();
                 },
-                child: const Text("Del"))),
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(8), // 여기서 원하는 정도의 둥근 정도 조절
+                  ),
+                ),
+                child: const Text(
+                  "Del",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ))),
       )
     ]);
   }
@@ -336,8 +357,12 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Button Color: "),
+        const Text(
+          "Button Color: ",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         // ValueListenableBuilder를 사용하여 colorButtonColor 값 변경 시 UI 업데이트
         ValueListenableBuilder<Color>(
           valueListenable: colorButtonColor, // 값을 리스닝하는 위젯
