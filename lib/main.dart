@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
+import 'saveData.dart';
+import 'option.dart';
 
 import 'package:weekycal/popup.dart';
 import 'mainWidget/weekBtn.dart';
@@ -10,8 +12,6 @@ import 'mainWidget/ScheduleInfoContainer.dart';
 
 //schedule first setting
 int week = 7;
-int minTime = 6;
-int maxTime = 24;
 double minTimeMin = 0.0;
 double maxTimeMin = 0.0;
 
@@ -68,14 +68,7 @@ final ValueNotifier<TimeOfDay> endTimeNotifier =
 final ValueNotifier<Color> colorButtonColor =
     ValueNotifier<Color>(Colors.white);
 
-//week data array
-var scheduleData = List.generate(7, (index) {
-  Week week = Week();
-  week.index = index;
-  return week;
-});
-
-void main() {
+void addSampleData() {
   //sample schedule
   Schedule sampleSchedule1 = Schedule();
   sampleSchedule1.index = 0;
@@ -105,6 +98,10 @@ void main() {
   sampleSchedule3.explanation = "exp2";
 
   scheduleData[3].scheduleInfo.add(sampleSchedule3);
+}
+
+void main() {
+  addSampleData();
 
   minTimeMin = minTime * 60;
   maxTimeMin = maxTimeMin * 60;
@@ -119,13 +116,17 @@ void applyNowSchedule(BuildContext context) {
     return;
   }
 
-  final startTimeInMinutes = startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
-  final endTimeInMinutes = endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
+  final startTimeInMinutes =
+      startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
+  final endTimeInMinutes =
+      endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
 
   // Function to check if the time overlaps with existing schedules
   bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
-    return (scheduleStart < startTimeInMinutes && scheduleEnd > startTimeInMinutes) ||
-           (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
+    return (scheduleStart < startTimeInMinutes &&
+            scheduleEnd > startTimeInMinutes) ||
+        (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes) ||
+        (scheduleStart == startTimeInMinutes || scheduleEnd == endTimeInMinutes);
   }
 
   // Check for time overlaps in the existing schedule data
@@ -156,7 +157,6 @@ void applyNowSchedule(BuildContext context) {
 
   SyncData();
 }
-
 
 void deleteNowSchedule() {
   if (nowWeekIndex < 0 || nowScheduleIndex < 0) {
@@ -189,7 +189,6 @@ Future<void> SyncData() async {
 // main
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -273,21 +272,7 @@ class MainApp extends StatelessWidget {
               ],
             ),
             // Setting button
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Container(
-                width: 50,
-                height: 50,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.settings,
-                    size: 30,
-                  ),
-                  onPressed: () {},
-                ),
-              ),
-            )
+            const Positioned(top: 15, right: 15, child: OptionBtn())
           ],
         ),
       ),
