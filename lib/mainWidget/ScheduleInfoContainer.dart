@@ -11,7 +11,7 @@ class ScheduleInfoContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        width: weekContainerSizeX + 50,
+        width: realContainerSizeX + 50,
         height: weekContainerSizeY / 2,
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 247, 242, 249),
@@ -42,7 +42,7 @@ class ScheduleInfoContainer extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(5),
                   child: Container(
-                    width: 210,
+                    width: 175,
                     height: 120,
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 247, 242, 249),
@@ -87,12 +87,12 @@ class _ContainerTitleTextState extends State<ContainerTitleText> {
       valueListenable: widget.isNewScheduleNotifier,
       builder: (context, isNewSchedule, child) {
         return SizedBox(
-          width: 200,
+          width: 170,
           child: Text(
             isNewSchedule ? "New Schedule Info" : "Schedule Info",
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              fontSize: 23.0,
+              fontSize: 18.0,
             ),
           ),
         );
@@ -134,18 +134,18 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
       child: Row(
         children: [
           SizedBox(
-            width: 80,
+            width: 75,
             child: Text(
               label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
           ),
           SizedBox(
-            width: 180, // 적절한 크기 설정
+            width: 120, // 적절한 크기 설정
             height: 25, // 적절한 높이 설정
             child: TextField(
-              maxLength: 20,
+              maxLength: 12,
               keyboardType: TextInputType.text,
               decoration: const InputDecoration(
                 contentPadding:
@@ -221,8 +221,8 @@ class _TimePickerColumState extends State<TimePickerColum> {
               valueListenable: startTimeNotifier,
               builder: (context, startTime, _) {
                 return Text(
-                  'Start Time: ${startTime.format(context)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  'Start: ${startTime.format(context)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 );
               },
             ),
@@ -274,8 +274,8 @@ class _TimePickerColumState extends State<TimePickerColum> {
               valueListenable: endTimeNotifier,
               builder: (context, endTime, _) {
                 return Text(
-                  'End Time: ${endTime.format(context)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  'End: ${endTime.format(context)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
                 );
               },
             ),
@@ -283,7 +283,7 @@ class _TimePickerColumState extends State<TimePickerColum> {
         ),
         const SizedBox(height: 10), // Spacing
         // Button to choose color (end time button color)
-        ButtonColorPickerRow()
+        const ButtonColorPickerRow()
       ],
     );
   }
@@ -304,7 +304,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
       Padding(
         padding: const EdgeInsets.all(5),
         child: SizedBox(
-            width: weekContainerSizeX / 3.5,
+            width: realContainerSizeX / 4,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
               onPressed: () {
@@ -318,14 +318,14 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
               ),
               child: const Text(
                 "Apply",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0),
               ),
             )),
       ),
       Padding(
         padding: const EdgeInsets.all(5),
         child: SizedBox(
-            width: weekContainerSizeX / 3.5,
+            width: realContainerSizeX / 4,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
                 onPressed: () {
@@ -338,8 +338,8 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
                   ),
                 ),
                 child: const Text(
-                  "Del",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  "Delete",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0),
                 ))),
       )
     ]);
@@ -367,20 +367,23 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
         ValueListenableBuilder<Color>(
           valueListenable: colorButtonColor, // 값을 리스닝하는 위젯
           builder: (context, color, child) {
-            return ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color, // colorButtonColor.value 사용
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(0),
+            return SizedBox(
+              height: 25,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color, // colorButtonColor.value 사용
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(0),
+                  ),
                 ),
+                onPressed: () async {
+                  Color selectedColor =
+                      await showColorPickerDialog(context, color);
+                  // 색상 선택 후 value 변경
+                  colorButtonColor.value = selectedColor;
+                },
+                child: const Text(""),
               ),
-              onPressed: () async {
-                Color selectedColor =
-                    await showColorPickerDialog(context, color);
-                // 색상 선택 후 value 변경
-                colorButtonColor.value = selectedColor;
-              },
-              child: const Text(""),
             );
           },
         ),

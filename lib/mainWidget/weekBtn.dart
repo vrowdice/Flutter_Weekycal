@@ -5,15 +5,20 @@ import 'package:weekycal/saveData.dart';
 
 //one week button column
 class WeekBtnColumn extends StatelessWidget {
-  final int week;
-  const WeekBtnColumn({super.key, required this.week});
+  final int index;
+  const WeekBtnColumn({super.key, required this.index});
   @override
   Widget build(BuildContext context) {
+    if (isRemoveWeekend) {
+      if (index == 0 || index >= week - 1) {
+        return const SizedBox();
+      }
+    }
     return Column(
       children: [
         for (int i = minTime; i < maxTime; i++)
           WeekBtn(
-            weekIndex: week,
+            weekIndex: index,
             time: i,
           )
       ],

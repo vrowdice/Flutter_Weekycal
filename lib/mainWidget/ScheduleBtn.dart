@@ -4,8 +4,8 @@ import 'package:weekycal/main.dart';
 import 'package:weekycal/saveData.dart';
 
 class ScheduleBtnColumn extends StatefulWidget {
-  final int weekIndex;
-  const ScheduleBtnColumn({super.key, required this.weekIndex});
+  final int index;
+  const ScheduleBtnColumn({super.key, required this.index});
 
   @override
   State<ScheduleBtnColumn> createState() => _ScheduleBtnColumnState();
@@ -14,9 +14,14 @@ class ScheduleBtnColumn extends StatefulWidget {
 class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
   @override
   Widget build(BuildContext context) {
+    if (isRemoveWeekend) {
+      if (widget.index == 0 || widget.index >= week - 1) {
+        return const SizedBox();
+      }
+    }
     List<Widget> weekWidgetList = []; // Initialize an empty list of widgets
 
-    if (scheduleData[widget.weekIndex].scheduleInfo.isEmpty) {
+    if (scheduleData[widget.index].scheduleInfo.isEmpty) {
       // If there are no schedules, add an empty container
       return SizedBox(
         width: weekContainerSizeX / 7,
@@ -26,12 +31,10 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
       double sumHeight = 0.0; // Accumulated height of the widgets
       double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
-      for (int i = 0;
-          i < scheduleData[widget.weekIndex].scheduleInfo.length;
-          i++) {
-        var info = scheduleData[widget.weekIndex].scheduleInfo[i];
+      for (int i = 0; i < scheduleData[widget.index].scheduleInfo.length; i++) {
+        var info = scheduleData[widget.index].scheduleInfo[i];
 
-        if(info.startTime / 60 < minTime || info.endTime / 60 > maxTime){
+        if (info.startTime / 60 < minTime || info.endTime / 60 > maxTime) {
           continue;
         }
 
@@ -51,7 +54,7 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
 
         // Add the schedule button
         weekWidgetList.add(ScheduleBtn(
-          weekIndex: widget.weekIndex,
+          weekIndex: widget.index,
           scheduleIndex: i, // Use the index here as well
           height: scheduleBtnHeight,
         ));

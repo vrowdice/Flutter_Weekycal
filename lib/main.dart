@@ -19,15 +19,16 @@ double maxTimeMin = 0.0;
 //schedule block size
 double weekTimeSizeX = 100.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 450.0;
+double weekContainerSizeX = 350.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
 double weekBtnHightForMin = 0.0;
+double realContainerSizeX = weekContainerSizeX;
 
 //textfield size
-double textFieldSizeX = 120;
-double textFieldSizeY = 25;
+double textFieldSizeX = 110;
+double textFieldSizeY = 35;
 
 //textfield info
 String textfieldName = "";
@@ -36,8 +37,8 @@ String textfieldStartTime = "";
 String textfieldEndTime = "";
 
 //scheduleInfoContanier time select button size
-double timeSelectBtnSizeX = 200.0;
-double timeSelectBtnSizeY = 45.0;
+double timeSelectBtnSizeX = 160.0;
+double timeSelectBtnSizeY = 70.0;
 
 //now setting schedule
 int nowWeekIndex = -1;
@@ -71,7 +72,6 @@ final ValueNotifier<Color> colorButtonColor =
 void addSampleData() {
   //sample schedule
   Schedule sampleSchedule1 = Schedule();
-  sampleSchedule1.index = 0;
   sampleSchedule1.name = "new schedule0";
   sampleSchedule1.startTime = 600;
   sampleSchedule1.endTime = 720;
@@ -81,7 +81,6 @@ void addSampleData() {
   scheduleData[3].scheduleInfo.add(sampleSchedule1);
 
   Schedule sampleSchedule2 = Schedule();
-  sampleSchedule2.index = 1;
   sampleSchedule2.name = "new schedule1";
   sampleSchedule2.startTime = 780;
   sampleSchedule2.endTime = 900;
@@ -91,7 +90,6 @@ void addSampleData() {
   scheduleData[3].scheduleInfo.add(sampleSchedule2);
 
   Schedule sampleSchedule3 = Schedule();
-  sampleSchedule3.index = 2;
   sampleSchedule3.name = "new schedule2";
   sampleSchedule3.startTime = 900;
   sampleSchedule3.endTime = 1080;
@@ -100,13 +98,18 @@ void addSampleData() {
   scheduleData[3].scheduleInfo.add(sampleSchedule3);
 }
 
-void main() {
-  addSampleData();
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await loadData();
 
   minTimeMin = minTime * 60;
   maxTimeMin = maxTimeMin * 60;
   weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
   weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
+  if(isRemoveWeekend){
+    weekContainerSizeX *= 1.5;
+    realContainerSizeX /= 1.4;
+  }
 
   runApp(const MainApp());
 }
@@ -125,8 +128,7 @@ void applyNowSchedule(BuildContext context) {
   bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
     return (scheduleStart < startTimeInMinutes &&
             scheduleEnd > startTimeInMinutes) ||
-        (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes) ||
-        (scheduleStart == startTimeInMinutes || scheduleEnd == endTimeInMinutes);
+        (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
   }
 
   // Check for time overlaps in the existing schedule data
@@ -148,6 +150,7 @@ void applyNowSchedule(BuildContext context) {
   // Add or update the schedule depending on whether it's a new schedule or not
   if (isNewSchadule.value) {
     scheduleData[nowWeekIndex].scheduleInfo.add(nowSchedule);
+    isNewSchadule.value = false;
   } else {
     if (nowScheduleIndex < 0) {
       return;
@@ -155,15 +158,21 @@ void applyNowSchedule(BuildContext context) {
     scheduleData[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
   }
 
+  scheduleData[nowWeekIndex].sortSchedulesByStartTime();
+
   SyncData();
 }
 
 void deleteNowSchedule() {
-  if (nowWeekIndex < 0 || nowScheduleIndex < 0) {
+  if (nowWeekIndex < 0 ||
+      nowScheduleIndex < 0 ||
+      scheduleData[nowWeekIndex].scheduleInfo.length <= 0) {
     return;
   }
 
   scheduleData[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
+  scheduleData[nowWeekIndex].sortSchedulesByStartTime();
+  isNewSchadule.value = true;
 
   SyncData();
 }
@@ -184,6 +193,8 @@ Future<void> SyncData() async {
   } finally {
     isSyncWithSchaduleData.value = false;
   }
+
+  await saveData();
 }
 
 // main
@@ -198,74 +209,76 @@ class MainApp extends StatelessWidget {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Set time text
-                    SizedBox(
-                      width: weekTimeSizeX - 50,
-                      height: weekContainerSizeY + 20,
-                      child: Column(
-                        children: [
-                          SizedBox(
-                            width: weekTimeSizeX,
-                            height: weekInfoSizeY - 10,
-                          ),
-                          for (int i = minTime; i < maxTime + 1; i++)
-                            TimeText(index: i)
-                        ],
+                SingleChildScrollView(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Set time text
+                      SizedBox(
+                        width: weekTimeSizeX - 50,
+                        height: weekContainerSizeY + 20,
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              width: weekTimeSizeX,
+                              height: weekInfoSizeY - 10,
+                            ),
+                            for (int i = minTime; i < maxTime + 1; i++)
+                              TimeText(index: i)
+                          ],
+                        ),
                       ),
-                    ),
-                    // Set schedule block
-                    Container(
-                      width: weekContainerSizeX + 2,
-                      height: weekContainerSizeY + 2,
-                      decoration: BoxDecoration(border: Border.all(width: 1.0)),
-                      child: Column(
-                        children: [
-                          Center(
-                            child: Row(
+                      // Set schedule block
+                      Container(
+                        width: realContainerSizeX + 2,
+                        height: weekContainerSizeY + 2,
+                        decoration:
+                            BoxDecoration(border: Border.all(width: 1.0)),
+                        child: Column(
+                          children: [
+                            Center(
+                                child: Row(
                               children: [
                                 for (int i = 0; i < week; i++)
                                   WeekStateBlock(
                                     index: i,
                                   )
                               ],
+                            )),
+                            Stack(
+                              children: [
+                                // Week setting button columns
+                                Row(
+                                  children: [
+                                    for (int i = 0; i < week; i++)
+                                      WeekBtnColumn(
+                                        index: i,
+                                      )
+                                  ],
+                                ),
+                                // Week schedule check and resetting button columns
+                                ValueListenableBuilder(
+                                    valueListenable: isSyncWithSchaduleData,
+                                    builder: (context, isSyncWithData, child) {
+                                      return Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          for (int i = 0; i < week; i++)
+                                            ScheduleBtnColumn(
+                                              index: i,
+                                            )
+                                        ],
+                                      );
+                                    }),
+                              ],
                             ),
-                          ),
-                          Stack(
-                            children: [
-                              // Week setting button columns
-                              Row(
-                                children: [
-                                  for (int i = 0; i < week; i++)
-                                    WeekBtnColumn(
-                                      week: i,
-                                    )
-                                ],
-                              ),
-                              // Week schedule check and resetting button columns
-                              ValueListenableBuilder(
-                                  valueListenable: isSyncWithSchaduleData,
-                                  builder: (context, isSyncWithData, child) {
-                                    return Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        for (int i = 0; i < week; i++)
-                                          ScheduleBtnColumn(
-                                            weekIndex: i,
-                                          )
-                                      ],
-                                    );
-                                  }),
-                            ],
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 // Set schedule info block
                 const ScheduleInfoContainer()
@@ -304,6 +317,11 @@ class WeekStateBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isRemoveWeekend) {
+      if (index == 0 || index >= week - 1) {
+        return const SizedBox();
+      }
+    }
     return Container(
       child: Text(convertWeekIntToStr(index)),
       width: weekContainerSizeX / 7,
