@@ -32,6 +32,10 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0"
+    }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
@@ -58,10 +62,16 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+
+    buildFeatures {
+        compose true
+    }
 }
 
 flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation "androidx.compose.runtime:runtime:1.5.0"
+}

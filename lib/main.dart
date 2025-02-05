@@ -17,9 +17,9 @@ double maxTimeMin = 0.0;
 
 //week container size setting
 //schedule block size
-double weekTimeSizeX = 100.0;
+double weekTimeSizeX = 60.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 350.0;
+double weekContainerSizeX = 340.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
@@ -107,7 +107,7 @@ Future<void> main() async {
   weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
   weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
   if(isRemoveWeekend){
-    weekContainerSizeX *= 1.5;
+    weekContainerSizeX *= 1.4;
     realContainerSizeX /= 1.4;
   }
 
@@ -204,6 +204,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Column(
@@ -216,13 +217,13 @@ class MainApp extends StatelessWidget {
                     children: [
                       // Set time text
                       SizedBox(
-                        width: weekTimeSizeX - 50,
+                        width: weekTimeSizeX - 30,
                         height: weekContainerSizeY + 20,
                         child: Column(
                           children: [
                             SizedBox(
                               width: weekTimeSizeX,
-                              height: weekInfoSizeY - 10,
+                              height: weekInfoSizeY - 7,
                             ),
                             for (int i = minTime; i < maxTime + 1; i++)
                               TimeText(index: i)
@@ -301,9 +302,10 @@ class TimeText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: (weekContainerSizeY - 41) / (maxTime - minTime) + 0.6,
+      height: (weekContainerSizeY - 40) / (maxTime - minTime) + 0.4,
       child: Text(
-        '${index.toString()} : 00',
+        '${index.toString()}h',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
       ),
     );
   }

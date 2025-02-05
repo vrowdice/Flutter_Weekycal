@@ -7,8 +7,8 @@ import 'dataClass.dart';
 bool isRemoveWeekend = true;
 
 // min time and max time
-int minTime = 6;
-int maxTime = 24;
+int minTime = 9;
+int maxTime = 20;
 
 // week data array
 var scheduleData = List.generate(7, (_) => Week());

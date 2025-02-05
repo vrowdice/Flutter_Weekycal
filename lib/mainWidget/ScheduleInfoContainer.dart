@@ -120,7 +120,7 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
         label = "Name";
         break;
       case 1:
-        label = "Explanation";
+        label = "Explan";
         break;
       default:
         label = "";
@@ -134,7 +134,7 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
       child: Row(
         children: [
           SizedBox(
-            width: 75,
+            width: 45,
             child: Text(
               label,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
