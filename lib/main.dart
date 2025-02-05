@@ -17,9 +17,9 @@ double maxTimeMin = 0.0;
 
 //week container size setting
 //schedule block size
-double weekTimeSizeX = 100.0;
+double weekTimeSizeX = 70.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 350.0;
+double weekContainerSizeX = 300.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
@@ -216,7 +216,7 @@ class MainApp extends StatelessWidget {
                     children: [
                       // Set time text
                       SizedBox(
-                        width: weekTimeSizeX - 50,
+                        width: weekTimeSizeX - 40,
                         height: weekContainerSizeY + 20,
                         child: Column(
                           children: [
@@ -303,7 +303,7 @@ class TimeText extends StatelessWidget {
     return SizedBox(
       height: (weekContainerSizeY - 41) / (maxTime - minTime) + 0.6,
       child: Text(
-        '${index.toString()} : 00',
+        '${index.toString()}H',
       ),
     );
   }
