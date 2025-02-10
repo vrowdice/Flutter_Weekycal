@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
@@ -69,49 +71,35 @@ final ValueNotifier<TimeOfDay> endTimeNotifier =
 final ValueNotifier<Color> colorButtonColor =
     ValueNotifier<Color>(Colors.white);
 
-void addSampleData() {
-  //sample schedule
-  Schedule sampleSchedule1 = Schedule();
-  sampleSchedule1.name = "new schedule0";
-  sampleSchedule1.startTime = 600;
-  sampleSchedule1.endTime = 720;
-  sampleSchedule1.btnColor = Colors.blue;
-  sampleSchedule1.explanation = "exp0";
-
-  scheduleData[3].scheduleInfo.add(sampleSchedule1);
-
-  Schedule sampleSchedule2 = Schedule();
-  sampleSchedule2.name = "new schedule1";
-  sampleSchedule2.startTime = 780;
-  sampleSchedule2.endTime = 900;
-  sampleSchedule2.btnColor = Colors.red;
-  sampleSchedule2.explanation = "exp1";
-
-  scheduleData[3].scheduleInfo.add(sampleSchedule2);
-
-  Schedule sampleSchedule3 = Schedule();
-  sampleSchedule3.name = "new schedule2";
-  sampleSchedule3.startTime = 900;
-  sampleSchedule3.endTime = 1080;
-  sampleSchedule3.explanation = "exp2";
-
-  scheduleData[3].scheduleInfo.add(sampleSchedule3);
-}
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await HomeWidget.registerBackgroundCallback(backgroundCallback);
   await loadData();
+  firstSetting();
+  runApp(const MainApp());
+}
 
+void firstSetting() {
   minTimeMin = minTime * 60;
   maxTimeMin = maxTimeMin * 60;
   weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
   weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
-  if(isRemoveWeekend){
+  if (isRemoveWeekend) {
     weekContainerSizeX *= 1.5;
     realContainerSizeX /= 1.4;
   }
+}
 
-  runApp(const MainApp());
+void updateHomeWidget(String scheduleText) async {
+  await HomeWidget.saveWidgetData<String>('schedule_text', scheduleText);
+  await HomeWidget.updateWidget(name: 'HomeWidgetProvider');
+}
+
+Future<void> loadData() async {
+  await HomeWidget.getWidgetData<String>('schedule_text', defaultValue: "스케줄 없음")
+      .then((String? value) {
+    print("현재 홈 위젯 스케줄: $value");
+  });
 }
 
 void applyNowSchedule(BuildContext context) {
@@ -161,6 +149,10 @@ void applyNowSchedule(BuildContext context) {
   scheduleData[nowWeekIndex].sortSchedulesByStartTime();
 
   SyncData();
+
+  String scheduleText =
+      "${nowSchedule.name}: ${nowSchedule.startTime} ~ ${nowSchedule.endTime}";
+  updateHomeWidget(scheduleText);
 }
 
 void deleteNowSchedule() {
@@ -197,13 +189,37 @@ Future<void> SyncData() async {
   await saveData();
 }
 
-// main
-class MainApp extends StatelessWidget {
+Future<void> backgroundCallback(Uri? uri) async {
+  if (uri?.host == 'updatecounter') {
+    int _counter = 0;
+    await HomeWidget.getWidgetData<int>('_counter', defaultValue: 0)
+        .then((int? value) {
+      _counter = value ?? 0;
+      _counter++;
+    });
+    await HomeWidget.saveWidgetData<int>('_counter', _counter);
+    await HomeWidget.updateWidget(
+        name: 'AppWidgetProvider', iOSName: 'AppWidgetProvider');
+  }
+}
+
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  @override
+  void initState() {
+    super.initState();
+    HomeWidget.widgetClicked.listen((Uri? uri) => loadData());
+    loadData();
+  }
+
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: Scaffold(
         resizeToAvoidBottomInset: true,
         body: Stack(
@@ -211,93 +227,106 @@ class MainApp extends StatelessWidget {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                 Flexible( // Use Flexible instead of Expanded
+                Flexible(
+                  // Use Flexible instead of Expanded
                   flex: 1, // Optional: You can adjust the flex factor if needed
                   child: SingleChildScrollView(
-                    physics: const ClampingScrollPhysics(),
-                    child: Column( // Changed to Column to allow for vertical scrolling
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              width: weekTimeSizeX - 35,
-                              height: weekContainerSizeY + 20,
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: weekTimeSizeX,
-                                    height: weekInfoSizeY - 10,
-                                  ),
-                                  for (int i = minTime; i < maxTime + 1; i++)
-                                    TimeText(index: i)
-                                ],
-                              ),
-                            ),
-                            Container(
-                              width: realContainerSizeX + 2,
-                              height: weekContainerSizeY + 2,
-                              decoration: BoxDecoration(
-                                  border: Border.all(width: 1.0)),
-                              child: Column(
-                                children: [
-                                  Center(
-                                    child: Row(
-                                      children: [
-                                        for (int i = 0; i < week; i++)
-                                          WeekStateBlock(
-                                            index: i,
-                                          )
-                                      ],
-                                    ),
-                                  ),
-                                  Stack(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          for (int i = 0; i < week; i++)
-                                            WeekBtnColumn(
-                                              index: i,
-                                            )
-                                        ],
-                                      ),
-                                      ValueListenableBuilder(
-                                        valueListenable: isSyncWithSchaduleData,
-                                        builder: (context, isSyncWithData, child) {
-                                          return Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              for (int i = 0; i < week; i++)
-                                                ScheduleBtnColumn(
-                                                  index: i,
-                                                )
-                                            ],
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                    physics: ClampingScrollPhysics(),
+                    child: ScheduleColumn(),
                   ),
                 ),
                 // Set schedule info block
-                const ScheduleInfoContainer(),
+                ScheduleInfoContainer(),
               ],
             ),
             // Setting button
-            const Positioned(top: 15, right: 15, child: OptionBtn())
+            Positioned(top: 15, right: 15, child: OptionBtn())
           ],
         ),
       ),
+    );
+  }
+}
+
+class ScheduleColumn extends StatefulWidget {
+  const ScheduleColumn({super.key});
+
+  @override
+  State<ScheduleColumn> createState() => _ScheduleColumnState();
+}
+
+class _ScheduleColumnState extends State<ScheduleColumn> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      // Changed to Column to allow for vertical scrolling
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: weekTimeSizeX - 35,
+              height: weekContainerSizeY + 20,
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: weekTimeSizeX,
+                    height: weekInfoSizeY - 10,
+                  ),
+                  for (int i = minTime; i < maxTime + 1; i++) TimeText(index: i)
+                ],
+              ),
+            ),
+            Container(
+              width: realContainerSizeX + 2,
+              height: weekContainerSizeY + 2,
+              decoration: BoxDecoration(border: Border.all(width: 1.0)),
+              child: Column(
+                children: [
+                  Center(
+                    child: Row(
+                      children: [
+                        for (int i = 0; i < week; i++)
+                          WeekStateBlock(
+                            index: i,
+                          )
+                      ],
+                    ),
+                  ),
+                  Stack(
+                    children: [
+                      Row(
+                        children: [
+                          for (int i = 0; i < week; i++)
+                            WeekBtnColumn(
+                              index: i,
+                            )
+                        ],
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: isSyncWithSchaduleData,
+                        builder: (context, isSyncWithData, child) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (int i = 0; i < week; i++)
+                                ScheduleBtnColumn(
+                                  index: i,
+                                )
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
