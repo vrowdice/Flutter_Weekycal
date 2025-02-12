@@ -1,10 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
-class Week {
+class WeekData {
   //week index
   int index = 0;
   //schedule list
-  List<Schedule> scheduleInfo = [];
+  List<ScheduleData> scheduleInfo = [];
 
   // Convert Week object to JSON
   Map<String, dynamic> toJson() => {
@@ -14,22 +15,27 @@ class Week {
       };
 
   // Create Week object from JSON
-  Week.fromJson(Map<String, dynamic> json) {
+  WeekData.fromJson(Map<String, dynamic> json) {
     index = json['index'];
     scheduleInfo = (json['scheduleInfo'] as List)
-        .map((scheduleJson) => Schedule.fromJson(scheduleJson))
+        .map((scheduleJson) => ScheduleData.fromJson(scheduleJson))
         .toList();
   }
-
-  // Default constructor
-  Week();
 
   void sortSchedulesByStartTime() {
     scheduleInfo.sort((a, b) => a.startTime.compareTo(b.startTime));
   }
+
+  String toJsonString() => jsonEncode(toJson());
+
+  static WeekData fromJsonString(String jsonString) =>
+      WeekData.fromJson(jsonDecode(jsonString));
+
+  // Default constructor
+  WeekData();
 }
 
-class Schedule {
+class ScheduleData {
   String name = "";
   int startTime = 0;
   int endTime = 0;
@@ -46,14 +52,19 @@ class Schedule {
       };
 
   // Create Schedule object from JSON
-  Schedule.fromJson(Map<String, dynamic> json) {
-    name = json['name'];
-    startTime = json['startTime'];
-    endTime = json['endTime'];
-    explanation = json['explanation'];
-    btnColor = Color(json['btnColor']); // int 값을 Color로 변환
+  ScheduleData.fromJson(Map<String, dynamic> json) {
+    name = json['name'] ?? ""; // null이면 빈 문자열 사용
+    startTime = json['startTime'] ?? 0; // null이면 0 사용
+    endTime = json['endTime'] ?? 0;
+    explanation = json['explanation'] ?? "";
+    btnColor = Color(json['btnColor'] ?? Colors.white.value); // null이면 흰색
   }
 
+  String toJsonString() => jsonEncode(toJson());
+
+  static ScheduleData fromJsonString(String jsonString) =>
+      ScheduleData.fromJson(jsonDecode(jsonString));
+
   // Default constructor
-  Schedule();
+  ScheduleData();
 }

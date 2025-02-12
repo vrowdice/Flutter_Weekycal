@@ -21,7 +21,7 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
     }
     List<Widget> weekWidgetList = []; // Initialize an empty list of widgets
 
-    if (scheduleData[widget.index].scheduleInfo.isEmpty) {
+    if (scheduleDataList[widget.index].scheduleInfo.isEmpty) {
       // If there are no schedules, add an empty container
       return SizedBox(
         width: weekContainerSizeX / 7,
@@ -31,8 +31,8 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
       double sumHeight = 0.0; // Accumulated height of the widgets
       double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
-      for (int i = 0; i < scheduleData[widget.index].scheduleInfo.length; i++) {
-        var info = scheduleData[widget.index].scheduleInfo[i];
+      for (int i = 0; i < scheduleDataList[widget.index].scheduleInfo.length; i++) {
+        var info = scheduleDataList[widget.index].scheduleInfo[i];
 
         if (info.startTime / 60 < minTime || info.endTime / 60 > maxTime) {
           continue;
@@ -88,15 +88,15 @@ class ScheduleBtn extends StatefulWidget {
 class _ScheduleBtnState extends State<ScheduleBtn> {
   @override
   Widget build(BuildContext context) {
-    Color btnColor = scheduleData[widget.weekIndex]
+    Color btnColor = scheduleDataList[widget.weekIndex]
         .scheduleInfo[widget.scheduleIndex]
         .btnColor;
     bool explanationVisible = true;
 
-    if (scheduleData[widget.weekIndex]
+    if (scheduleDataList[widget.weekIndex]
                 .scheduleInfo[widget.scheduleIndex]
                 .endTime -
-            scheduleData[widget.weekIndex]
+            scheduleDataList[widget.weekIndex]
                 .scheduleInfo[widget.scheduleIndex]
                 .startTime <
         120) {
@@ -118,16 +118,16 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
           ),
         ),
         onPressed: () {
-          String name = scheduleData[widget.weekIndex]
+          String name = scheduleDataList[widget.weekIndex]
               .scheduleInfo[widget.scheduleIndex]
               .name;
-          String explanation = scheduleData[widget.weekIndex]
+          String explanation = scheduleDataList[widget.weekIndex]
               .scheduleInfo[widget.scheduleIndex]
               .explanation;
-          int startTime = scheduleData[widget.weekIndex]
+          int startTime = scheduleDataList[widget.weekIndex]
               .scheduleInfo[widget.scheduleIndex]
               .startTime;
-          int endTime = scheduleData[widget.weekIndex]
+          int endTime = scheduleDataList[widget.weekIndex]
               .scheduleInfo[widget.scheduleIndex]
               .endTime;
 
@@ -153,7 +153,7 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "${scheduleData[widget.weekIndex].scheduleInfo[widget.scheduleIndex].name}", // 텍스트
+                  "${scheduleDataList[widget.weekIndex].scheduleInfo[widget.scheduleIndex].name}", // 텍스트
                   style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
@@ -164,7 +164,7 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
                 Visibility(
                   visible: explanationVisible,
                   child: Text(
-                    "${scheduleData[widget.weekIndex].scheduleInfo[widget.scheduleIndex].explanation}",
+                    "${scheduleDataList[widget.weekIndex].scheduleInfo[widget.scheduleIndex].explanation}",
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 10.0,

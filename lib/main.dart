@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
@@ -38,6 +39,8 @@ String textfieldExplanation = "";
 String textfieldStartTime = "";
 String textfieldEndTime = "";
 
+String dataID = "scheduleData";
+
 //scheduleInfoContanier time select button size
 double timeSelectBtnSizeX = 160.0;
 double timeSelectBtnSizeY = 70.0;
@@ -47,7 +50,7 @@ int nowWeekIndex = -1;
 int nowScheduleIndex = -1;
 
 // sort schedules as start time
-void sortSchedulesByStartTime(List<Schedule> schedules) {
+void sortSchedulesByStartTime(List<ScheduleData> schedules) {
   schedules.sort((a, b) => a.startTime.compareTo(b.startTime));
 }
 
@@ -73,100 +76,13 @@ final ValueNotifier<Color> colorButtonColor =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await HomeWidget.registerBackgroundCallback(backgroundCallback);
   await loadData();
-  firstSetting();
-  runApp(const MainApp());
-}
-
-void firstSetting() {
-  minTimeMin = minTime * 60;
-  maxTimeMin = maxTimeMin * 60;
-  weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
-  weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
-  if (isRemoveWeekend) {
-    weekContainerSizeX *= 1.5;
-    realContainerSizeX /= 1.4;
-  }
-}
-
-void updateHomeWidget(String scheduleText) async {
-  await HomeWidget.saveWidgetData<String>('schedule_text', scheduleText);
-  await HomeWidget.updateWidget(name: 'HomeWidgetProvider');
-}
-
-Future<void> loadData() async {
-  await HomeWidget.getWidgetData<String>('schedule_text', defaultValue: "스케줄 없음")
+    await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
       .then((String? value) {
     print("현재 홈 위젯 스케줄: $value");
   });
-}
-
-void applyNowSchedule(BuildContext context) {
-  if (nowWeekIndex < 0) {
-    return;
-  }
-
-  final startTimeInMinutes =
-      startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
-  final endTimeInMinutes =
-      endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
-
-  // Function to check if the time overlaps with existing schedules
-  bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
-    return (scheduleStart < startTimeInMinutes &&
-            scheduleEnd > startTimeInMinutes) ||
-        (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
-  }
-
-  // Check for time overlaps in the existing schedule data
-  for (var schedule in scheduleData[nowWeekIndex].scheduleInfo) {
-    if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
-      showWarningDialog(context, "The schedule overlaps with an existing one.");
-      return;
-    }
-  }
-
-  // Create a new schedule object with the data from the input fields
-  Schedule nowSchedule = Schedule()
-    ..name = textFieldControllers[0].text
-    ..explanation = textFieldControllers[1].text
-    ..startTime = startTimeInMinutes
-    ..endTime = endTimeInMinutes
-    ..btnColor = colorButtonColor.value;
-
-  // Add or update the schedule depending on whether it's a new schedule or not
-  if (isNewSchadule.value) {
-    scheduleData[nowWeekIndex].scheduleInfo.add(nowSchedule);
-    isNewSchadule.value = false;
-  } else {
-    if (nowScheduleIndex < 0) {
-      return;
-    }
-    scheduleData[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
-  }
-
-  scheduleData[nowWeekIndex].sortSchedulesByStartTime();
-
-  SyncData();
-
-  String scheduleText =
-      "${nowSchedule.name}: ${nowSchedule.startTime} ~ ${nowSchedule.endTime}";
-  updateHomeWidget(scheduleText);
-}
-
-void deleteNowSchedule() {
-  if (nowWeekIndex < 0 ||
-      nowScheduleIndex < 0 ||
-      scheduleData[nowWeekIndex].scheduleInfo.length <= 0) {
-    return;
-  }
-
-  scheduleData[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
-  scheduleData[nowWeekIndex].sortSchedulesByStartTime();
-  isNewSchadule.value = true;
-
-  SyncData();
+  firstSetting();
+  runApp(const MainApp());
 }
 
 Future<void> SyncData() async {
@@ -189,18 +105,88 @@ Future<void> SyncData() async {
   await saveData();
 }
 
-Future<void> backgroundCallback(Uri? uri) async {
-  if (uri?.host == 'updatecounter') {
-    int _counter = 0;
-    await HomeWidget.getWidgetData<int>('_counter', defaultValue: 0)
-        .then((int? value) {
-      _counter = value ?? 0;
-      _counter++;
-    });
-    await HomeWidget.saveWidgetData<int>('_counter', _counter);
-    await HomeWidget.updateWidget(
-        name: 'AppWidgetProvider', iOSName: 'AppWidgetProvider');
+void firstSetting() {
+  minTimeMin = minTime * 60;
+  maxTimeMin = maxTimeMin * 60;
+  weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
+  weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
+  if (isRemoveWeekend) {
+    weekContainerSizeX *= 1.5;
+    realContainerSizeX /= 1.4;
   }
+}
+
+void updateHomeWidget() async {
+  // ScheduleData 리스트를 JSON 문자열로 변환
+  String jsonString = jsonEncode(scheduleDataList.map((e) => e.toJson()).toList());
+
+  await HomeWidget.saveWidgetData<String>(dataID, jsonString);
+  await HomeWidget.updateWidget(name: 'AppWidgetProvider');
+}
+
+void applyNowSchedule(BuildContext context) {
+  if (nowWeekIndex < 0) {
+    return;
+  }
+
+  final startTimeInMinutes =
+      startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
+  final endTimeInMinutes =
+      endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
+
+  // Function to check if the time overlaps with existing schedules
+  bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
+    return (scheduleStart < startTimeInMinutes &&
+            scheduleEnd > startTimeInMinutes) ||
+        (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
+  }
+
+  // Check for time overlaps in the existing schedule data
+  for (var schedule in scheduleDataList[nowWeekIndex].scheduleInfo) {
+    if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
+      showWarningDialog(context, "The schedule overlaps with an existing one.");
+      return;
+    }
+  }
+
+  // Create a new schedule object with the data from the input fields
+  ScheduleData nowSchedule = ScheduleData()
+    ..name = textFieldControllers[0].text
+    ..explanation = textFieldControllers[1].text
+    ..startTime = startTimeInMinutes
+    ..endTime = endTimeInMinutes
+    ..btnColor = colorButtonColor.value;
+
+  // Add or update the schedule depending on whether it's a new schedule or not
+  if (isNewSchadule.value) {
+    scheduleDataList[nowWeekIndex].scheduleInfo.add(nowSchedule);
+    isNewSchadule.value = false;
+  } else {
+    if (nowScheduleIndex < 0) {
+      return;
+    }
+    scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
+  }
+
+  scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
+
+  SyncData();
+
+  updateHomeWidget();
+}
+
+void deleteNowSchedule() {
+  if (nowWeekIndex < 0 ||
+      nowScheduleIndex < 0 ||
+      scheduleDataList[nowWeekIndex].scheduleInfo.length <= 0) {
+    return;
+  }
+
+  scheduleDataList[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
+  scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
+  isNewSchadule.value = true;
+
+  SyncData();
 }
 
 class MainApp extends StatefulWidget {
