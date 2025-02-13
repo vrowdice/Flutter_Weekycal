@@ -2,7 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/widget_layout"
     android:minWidth="280dp"
-    android:minHeight="210dp"
+    android:minHeight="280dp"
     android:minResizeWidth="280dp"
-    android:minResizeHeight="210dp"
+    android:minResizeHeight="280dp"
     android:widgetCategory="home_screen" />

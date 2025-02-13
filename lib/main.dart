@@ -39,7 +39,7 @@ String textfieldExplanation = "";
 String textfieldStartTime = "";
 String textfieldEndTime = "";
 
-String dataID = "scheduleData";
+String dataID = "schedule_data";
 
 //scheduleInfoContanier time select button size
 double timeSelectBtnSizeX = 160.0;
@@ -117,9 +117,7 @@ void firstSetting() {
 }
 
 void updateHomeWidget() async {
-  // ScheduleData 리스트를 JSON 문자열로 변환
   String jsonString = jsonEncode(scheduleDataList.map((e) => e.toJson()).toList());
-
   await HomeWidget.saveWidgetData<String>(dataID, jsonString);
   await HomeWidget.updateWidget(name: 'AppWidgetProvider');
 }
@@ -187,6 +185,8 @@ void deleteNowSchedule() {
   isNewSchadule.value = true;
 
   SyncData();
+
+  updateHomeWidget();
 }
 
 class MainApp extends StatefulWidget {
