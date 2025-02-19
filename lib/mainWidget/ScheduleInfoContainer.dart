@@ -318,7 +318,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
               ),
               child: const Text(
                 "Apply",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.0),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10.0),
               ),
             )),
       ),
@@ -339,7 +339,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
                 ),
                 child: const Text(
                   "Delete",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.0),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10.0),
                 ))),
       )
     ]);

@@ -20,19 +20,12 @@ class AppWidgetProvider : HomeWidgetProvider() {
 companion object {
     private const val SCHEDULE_DATA_KEY = "schedule_data"
     val TV_SCHEDULE_NAME_1 = R.id.tv_schedule_name_1
-    val TV_SCHEDULE_TIME_1 = R.id.tv_schedule_time_1
     val TV_SCHEDULE_NAME_2 = R.id.tv_schedule_name_2
-    val TV_SCHEDULE_TIME_2 = R.id.tv_schedule_time_2
     val TV_SCHEDULE_NAME_3 = R.id.tv_schedule_name_3
-    val TV_SCHEDULE_TIME_3 = R.id.tv_schedule_time_3
     val TV_SCHEDULE_NAME_4 = R.id.tv_schedule_name_4
-    val TV_SCHEDULE_TIME_4 = R.id.tv_schedule_time_4
     val TV_SCHEDULE_NAME_5 = R.id.tv_schedule_name_5
-    val TV_SCHEDULE_TIME_5 = R.id.tv_schedule_time_5
     val TV_SCHEDULE_NAME_6 = R.id.tv_schedule_name_6
-    val TV_SCHEDULE_TIME_6 = R.id.tv_schedule_time_6
     val TV_SCHEDULE_NAME_7 = R.id.tv_schedule_name_7
-    val TV_SCHEDULE_TIME_7 = R.id.tv_schedule_time_7
 
 }
 
@@ -56,20 +49,32 @@ companion object {
             val scheduleJson = widgetData.getString(SCHEDULE_DATA_KEY, "[]") ?: "[]"
             val weekList = parseScheduleData(scheduleJson)
             Log.d("AppWidgetProvider", "Retrieved JSON: $scheduleJson")
-
+            
             // 주별로 첫 번째 주의 일정만 표시 (7일의 일정)
             for (dayIndex in 0 until 7) {
                 val daySchedule = weekList.getOrNull(dayIndex)
+                
                 // 일정이 있을 경우 텍스트 설정
-                if (daySchedule != null) {
-                    views.setTextViewText(getScheduleNameViewId(dayIndex), daySchedule.name)
-                    views.setTextViewText(getScheduleTimeViewId(dayIndex), "${daySchedule.startTime} ~ ${daySchedule.endTime}")
+                if (daySchedule != null && daySchedule.schedules.isNotEmpty()) {
+                    var text = "\n "
+                    
+                    // 해당 일에 대한 모든 일정 합치기
+                    for (schedule in daySchedule.schedules) {
+                        text += "${schedule.name}\n"
+                        
+                        // 시작 시간과 종료 시간을 시:분 형식으로 변환
+                        val startTimeFormatted = convertMinutesToTime(schedule.startTime)
+                        val endTimeFormatted = convertMinutesToTime(schedule.endTime)
+                        
+                        text += "$startTimeFormatted ~ $endTimeFormatted\n"
+                    }
+                    
+                    // 하나의 TextView에 모든 일정 표시
+                    views.setTextViewText(getScheduleNameViewId(dayIndex), text.trim())
                     views.setViewVisibility(getScheduleNameViewId(dayIndex), View.VISIBLE)
-                    views.setViewVisibility(getScheduleTimeViewId(dayIndex), View.VISIBLE)
                 } else {
                     // 일정이 없으면 숨기기
                     views.setViewVisibility(getScheduleNameViewId(dayIndex), View.GONE)
-                    views.setViewVisibility(getScheduleTimeViewId(dayIndex), View.GONE)
                 }
             }
 
@@ -109,15 +114,21 @@ companion object {
 
                 // scheduleInfo 내부 배열을 가져와서 일정 리스트로 변환
                 val scheduleInfoArray = jsonObject.getJSONArray("scheduleInfo")
+                val schedules = mutableListOf<Schedule>()  // 해당 날짜에 대한 일정을 담을 리스트
+
                 for (j in 0 until scheduleInfoArray.length()) {
                     val scheduleInfo = scheduleInfoArray.getJSONObject(j)
-                    val schedule = ScheduleData(
+                    val schedule = Schedule(
                         scheduleInfo.getString("name"),
                         scheduleInfo.getInt("startTime"),
                         scheduleInfo.getInt("endTime")
                     )
-                    scheduleList.add(schedule)
+                    schedules.add(schedule)
                 }
+
+                // schedules 리스트를 담은 ScheduleData 객체 생성
+                val scheduleData = ScheduleData(schedules)
+                scheduleList.add(scheduleData)
             }
         } catch (e: JSONException) {
             Log.e("AppWidgetProvider", "Error parsing JSON: ${e.message}")
@@ -128,9 +139,13 @@ companion object {
 
     // 일정 데이터 클래스
     data class ScheduleData(
-        val name: String,
-        val startTime: Int,
-        val endTime: Int
+        val schedules: List<Schedule> = emptyList()  // 여러 일정들을 담는 리스트
+    )
+
+    data class Schedule(
+        val name: String,        // 일정의 이름
+        val startTime: Int,      // 시작 시간
+        val endTime: Int,        // 종료 시간
     )
 
     // 일정 이름을 표시할 TextView의 ID를 가져오는 함수
@@ -146,16 +161,10 @@ companion object {
         }
     }
 
-    // 일정 시간을 표시할 TextView의 ID를 가져오는 함수
-    private fun getScheduleTimeViewId(index: Int): Int {
-        return when (index) {
-            0 -> TV_SCHEDULE_TIME_1
-            1 -> TV_SCHEDULE_TIME_2
-            2 -> TV_SCHEDULE_TIME_3
-            3 -> TV_SCHEDULE_TIME_4
-            4 -> TV_SCHEDULE_TIME_5
-            5 -> TV_SCHEDULE_TIME_6
-            else -> TV_SCHEDULE_TIME_7
-        }
-    }
+    // 시간을 시:분 형식으로 변환하는 함수
+    fun convertMinutesToTime(minutes: Int): String {
+        val hours = minutes / 60  // 시간을 계산
+        val mins = minutes % 60  // 분을 계산
+        return String.format("%02d:%02d", hours, mins)  // 시:분 형식으로 반환
+    }            
 }

@@ -22,7 +22,7 @@ double maxTimeMin = 0.0;
 //schedule block size
 double weekTimeSizeX = 70.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 300.0;
+double weekContainerSizeX = 315.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
