@@ -1,203 +1,318 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-//import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
+
+import 'dataClass.dart';
+import 'converter.dart';
+import 'saveData.dart';
+import 'option.dart';
+
+import 'package:weekycal/popup.dart';
+import 'mainWidget/weekBtn.dart';
+import 'mainWidget/ScheduleBtn.dart';
+import 'mainWidget/ScheduleInfoContainer.dart';
+
+//schedule first setting
+int week = 7;
+double minTimeMin = 0.0;
+double maxTimeMin = 0.0;
 
 //week container size setting
-int minTime = 6;
-int maxTime = 24;
-
 //schedule block size
-double weekTimeSizeX = 100.0;
+double weekTimeSizeX = 70.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 400.0;
+double weekContainerSizeX = 315.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
+double weekBtnHight = 0.0;
+double weekBtnHightForMin = 0.0;
+double realContainerSizeX = weekContainerSizeX;
 
 //textfield size
-double textFieldSizeX = 120;
-double textFieldSizeY = 25;
+double textFieldSizeX = 110;
+double textFieldSizeY = 35;
+
 //textfield info
 String textfieldName = "";
 String textfieldExplanation = "";
 String textfieldStartTime = "";
 String textfieldEndTime = "";
 
-//week data array
-var schedule = List.generate(7, (index) {
-  Week week = Week();
-  week.index = index;
-  return week;
-});
+String dataID = "schedule_data";
 
-class Week {
-  //week index
-  int index = 0;
-  //schedule list
-  List<Schedule> scheduleInfo = [];
+//scheduleInfoContanier time select button size
+double timeSelectBtnSizeX = 160.0;
+double timeSelectBtnSizeY = 70.0;
+
+//now setting schedule
+int nowWeekIndex = -1;
+int nowScheduleIndex = -1;
+
+// sort schedules as start time
+void sortSchedulesByStartTime(List<ScheduleData> schedules) {
+  schedules.sort((a, b) => a.startTime.compareTo(b.startTime));
 }
 
-class Schedule {
-  //schedule index
-  int index = -1;
-  //schedule name
-  String name = "";
-  //schedule start time
-  int startTime = 0;
-  //schedule end time
-  int endTime = 0;
-  //schedule explanation
-  String explanation = "";
-}
+//text field controllers
+List<TextEditingController> textFieldControllers = [
+  TextEditingController(),
+  TextEditingController(),
+  // Add controllers for other text fields if necessary
+];
 
-void main() {
-  //sample schedule
-  Schedule sampleSchedule = Schedule();
-  sampleSchedule.name = "new schedule";
-  sampleSchedule.startTime = 600;
-  sampleSchedule.endTime = 720;
-  sampleSchedule.explanation = "exp";
+//if this flag turn true than sync schadule and turn again to false
+final ValueNotifier<bool> isSyncWithSchaduleData = ValueNotifier(false);
+//if is new schadule = true
+final ValueNotifier<bool> isNewSchadule = ValueNotifier(false);
+//time input field controllers
+final ValueNotifier<TimeOfDay> startTimeNotifier =
+    ValueNotifier(TimeOfDay(hour: 9, minute: 0));
+final ValueNotifier<TimeOfDay> endTimeNotifier =
+    ValueNotifier(TimeOfDay(hour: 10, minute: 0));
+// Global variable to manage button color
+final ValueNotifier<Color> colorButtonColor =
+    ValueNotifier<Color>(Colors.white);
 
-  schedule[2].scheduleInfo.add(sampleSchedule);
-
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await loadData();
+    await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
+      .then((String? value) {
+    print("현재 홈 위젯 스케줄: $value");
+  });
+  firstSetting();
   runApp(const MainApp());
 }
 
-//main
-class MainApp extends StatelessWidget {
+Future<void> SyncData() async {
+  if (isSyncWithSchaduleData.value) {
+    return;
+  }
+
+  isSyncWithSchaduleData.value = true;
+
+  try {
+    // Running the synchronization process
+    await Future.delayed(Duration(milliseconds: 500));
+    print("Data sync complete.");
+  } catch (e) {
+    print("Sync error: $e");
+  } finally {
+    isSyncWithSchaduleData.value = false;
+  }
+
+  await saveData();
+}
+
+void firstSetting() {
+  minTimeMin = minTime * 60;
+  maxTimeMin = maxTimeMin * 60;
+  weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
+  weekBtnHightForMin = weekBtnHight * (1.0 / 60.0);
+  if (isRemoveWeekend) {
+    weekContainerSizeX *= 1.5;
+    realContainerSizeX /= 1.4;
+  }
+}
+
+void updateHomeWidget() async {
+  String jsonString = jsonEncode(scheduleDataList.map((e) => e.toJson()).toList());
+  await HomeWidget.saveWidgetData<String>(dataID, jsonString);
+  await HomeWidget.updateWidget(name: 'AppWidgetProvider');
+}
+
+void applyNowSchedule(BuildContext context) {
+  if (nowWeekIndex < 0) {
+    return;
+  }
+
+  final startTimeInMinutes =
+      startTimeNotifier.value.hour * 60 + startTimeNotifier.value.minute;
+  final endTimeInMinutes =
+      endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
+
+  // Function to check if the time overlaps with existing schedules
+  bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
+    return (scheduleStart < startTimeInMinutes &&
+            scheduleEnd > startTimeInMinutes) ||
+        (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
+  }
+
+  // Check for time overlaps in the existing schedule data
+  for (var schedule in scheduleDataList[nowWeekIndex].scheduleInfo) {
+    if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
+      showWarningDialog(context, "The schedule overlaps with an existing one.");
+      return;
+    }
+  }
+
+  // Create a new schedule object with the data from the input fields
+  ScheduleData nowSchedule = ScheduleData()
+    ..name = textFieldControllers[0].text
+    ..explanation = textFieldControllers[1].text
+    ..startTime = startTimeInMinutes
+    ..endTime = endTimeInMinutes
+    ..btnColor = colorButtonColor.value;
+
+  // Add or update the schedule depending on whether it's a new schedule or not
+  if (isNewSchadule.value) {
+    scheduleDataList[nowWeekIndex].scheduleInfo.add(nowSchedule);
+    isNewSchadule.value = false;
+  } else {
+    if (nowScheduleIndex < 0) {
+      return;
+    }
+    scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
+  }
+
+  scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
+
+  SyncData();
+
+  updateHomeWidget();
+}
+
+void deleteNowSchedule() {
+  if (nowWeekIndex < 0 ||
+      nowScheduleIndex < 0 ||
+      scheduleDataList[nowWeekIndex].scheduleInfo.length <= 0) {
+    return;
+  }
+
+  scheduleDataList[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
+  scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
+  isNewSchadule.value = true;
+
+  SyncData();
+
+  updateHomeWidget();
+}
+
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  @override
+  void initState() {
+    super.initState();
+    HomeWidget.widgetClicked.listen((Uri? uri) => loadData());
+    loadData();
+  }
+
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       home: Scaffold(
-          resizeToAvoidBottomInset: false,
-          bottomNavigationBar: BottomNavigationBar(
-            onTap: (int index) {
-              switch (index) {
-                case 0:
-                  break;
-                case 1:
-                  break;
-                default:
-              }
-            },
-            items: [
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.schedule), label: 'Schedule'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.settings), label: 'Setting')
-            ],
-          ),
-          body: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+        resizeToAvoidBottomInset: true,
+        body: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  // Use Flexible instead of Expanded
+                  flex: 1, // Optional: You can adjust the flex factor if needed
+                  child: SingleChildScrollView(
+                    physics: ClampingScrollPhysics(),
+                    child: ScheduleColumn(),
+                  ),
+                ),
+                // Set schedule info block
+                ScheduleInfoContainer(),
+              ],
+            ),
+            // Setting button
+            Positioned(top: 15, right: 15, child: OptionBtn())
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ScheduleColumn extends StatefulWidget {
+  const ScheduleColumn({super.key});
+
+  @override
+  State<ScheduleColumn> createState() => _ScheduleColumnState();
+}
+
+class _ScheduleColumnState extends State<ScheduleColumn> {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      // Changed to Column to allow for vertical scrolling
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: weekTimeSizeX - 35,
+              height: weekContainerSizeY + 20,
+              child: Column(
                 children: [
-                  //set time text
                   SizedBox(
-                    width: weekTimeSizeX - 50,
-                    height: weekContainerSizeY + 20,
-                    child: Column(
+                    width: weekTimeSizeX,
+                    height: weekInfoSizeY - 10,
+                  ),
+                  for (int i = minTime; i < maxTime + 1; i++) TimeText(index: i)
+                ],
+              ),
+            ),
+            Container(
+              width: realContainerSizeX + 2,
+              height: weekContainerSizeY + 2,
+              decoration: BoxDecoration(border: Border.all(width: 1.0)),
+              child: Column(
+                children: [
+                  Center(
+                    child: Row(
                       children: [
-                        SizedBox(
-                          width: weekTimeSizeX,
-                          height: weekInfoSizeY - 10,
-                        ),
-                        for (int i = minTime; i < maxTime + 1; i++)
-                          TimeText(index: i)
+                        for (int i = 0; i < week; i++)
+                          WeekStateBlock(
+                            index: i,
+                          )
                       ],
                     ),
                   ),
-                  //set schedule block
-                  Container(
-                    width: weekContainerSizeX + 2,
-                    height: weekContainerSizeY + 2,
-                    decoration: BoxDecoration(border: Border.all(width: 1.0)),
-                    child: Column(
-                      children: [
-                        Center(
-                          child: Row(
+                  Stack(
+                    children: [
+                      Row(
+                        children: [
+                          for (int i = 0; i < week; i++)
+                            WeekBtnColumn(
+                              index: i,
+                            )
+                        ],
+                      ),
+                      ValueListenableBuilder(
+                        valueListenable: isSyncWithSchaduleData,
+                        builder: (context, isSyncWithData, child) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              for (int i = 0; i < 7; i++)
-                                WeekStateBlock(
+                              for (int i = 0; i < week; i++)
+                                ScheduleBtnColumn(
                                   index: i,
                                 )
                             ],
-                          ),
-                        ),
-                        Stack(
-                          children: [
-                            //week setting button columns
-                            Row(
-                              children: [
-                                for (int i = 0; i < 7; i++)
-                                  WeekBtnColumn(
-                                    week: i,
-                                  )
-                              ],
-                            ),
-                            //week schedule check and resetting button columns
-                            Row(
-                              children: [
-                                for (int i = 0; i < 7; i++)
-                                  ScheduleBtnColumn(
-                                    week: i,
-                                  )
-                              ],
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
-              //set schedule info block
-              Container(
-                  width: weekContainerSizeX + 50,
-                  height: weekContainerSizeY / 3,
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 247, 242, 249),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 5,
-                        offset: Offset(1, 1),
-                      ),
-                    ],
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(5.0),
-                        child: Text(
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            "Schedule Info"),
-                      ),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Column(
-                            children: [
-                              ScheduleInfoTextField(index: 0),
-                              ScheduleInfoTextField(index: 1)
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              ScheduleInfoTextField(index: 2),
-                              ScheduleInfoTextField(index: 3)
-                            ],
-                          )
-                        ],
-                      ),
-                    ],
-                  ))
-            ],
-          )),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -212,7 +327,8 @@ class TimeText extends StatelessWidget {
     return SizedBox(
       height: (weekContainerSizeY - 41) / (maxTime - minTime) + 0.6,
       child: Text(
-        '${index.toString()} : 00',
+        '${index.toString()}:00',
+        style: TextStyle(fontSize: 12.0),
       ),
     );
   }
@@ -226,227 +342,17 @@ class WeekStateBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (isRemoveWeekend) {
+      if (index == 0 || index >= week - 1) {
+        return const SizedBox();
+      }
+    }
     return Container(
-      child: Center(
-        child: Text(convertWeekIntToStr(index)),
-      ),
+      child: Text(convertWeekIntToStr(index)),
       width: weekContainerSizeX / 7,
       height: weekInfoSizeY,
       decoration:
           BoxDecoration(color: Colors.white, border: Border.all(width: 1.0)),
     );
-  }
-}
-
-//one week button column
-class WeekBtnColumn extends StatelessWidget {
-  final int week;
-  const WeekBtnColumn({super.key, required this.week});
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (int i = minTime; i < maxTime; i++)
-          WeekBtn(
-            week: week,
-            time: i,
-          )
-      ],
-    );
-  }
-}
-
-//week setting, info button
-class WeekBtn extends StatefulWidget {
-  final int week;
-  final int time;
-  const WeekBtn({super.key, required this.week, required this.time});
-
-  @override
-  State<WeekBtn> createState() => WeekBtnState();
-}
-
-//weekly calendar button in schedule settings
-class WeekBtnState extends State<WeekBtn> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-        width: weekContainerSizeX / 7,
-        height: ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)),
-        decoration:
-            BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
-        child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(0))),
-            onPressed: () {},
-            child: Container()));
-  }
-}
-
-class ScheduleBtnColumn extends StatefulWidget {
-  final int week;
-  const ScheduleBtnColumn({super.key, required this.week});
-
-  @override
-  State<ScheduleBtnColumn> createState() => _ScheduleBtnColumnState();
-}
-
-class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> weekWidgetList = []; // 초기화 시 List<Widget> 사용
-    List<int> scheduleInfoList = [];
-    List<int> scheduleStartTimeList = [];
-    List<int> scheduleEndTimeList = [];
-    List<int> btnOrder = [];
-
-    // 일정 정보 추출
-    for (int i = 0; i < schedule[widget.week].scheduleInfo.length; i++) {
-      scheduleInfoList.add(schedule[widget.week].scheduleInfo[i].index);
-      scheduleStartTimeList
-          .add(schedule[widget.week].scheduleInfo[i].startTime);
-      scheduleEndTimeList.add(schedule[widget.week].scheduleInfo[i].endTime);
-    }
-
-    //중간중간에 유동적으로 맞는 컨테이너를 삽입해야 함
-    //1시 30분 1시 40분 등 1시간 단위 처리가 아닌 분 단위 처리를 위해
-    
-
-
-    if (schedule[widget.week].scheduleInfo.length <= 0) {
-      weekWidgetList.add(Container(width: weekContainerSizeX / 7));
-    } else {
-      btnOrder = List.filled(maxTime - minTime, -1);
-      for (int i = 0; i < scheduleStartTimeList.length; i++) {
-
-      }
-      for (int i = 0; i < maxTime - minTime; i++) {}
-    }
-
-    return Column(
-      children: weekWidgetList, // 최종적으로 구성된 위젯 리스트 반환
-    );
-  }
-}
-
-class ScheduleBtn extends StatefulWidget {
-  final int week;
-  final int index;
-  const ScheduleBtn({super.key, required this.week, required this.index});
-
-  @override
-  State<ScheduleBtn> createState() => _ScheduleBtnState();
-}
-
-class _ScheduleBtnState extends State<ScheduleBtn> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-        width: weekContainerSizeX / 7,
-        height: (((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)) *
-            (schedule[widget.week].scheduleInfo[widget.index].endTime / 60 -
-                schedule[widget.week].scheduleInfo[widget.index].startTime /
-                    60)),
-        decoration:
-            BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
-        child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(0))),
-            onPressed: () {},
-            child: Container()));
-  }
-}
-
-class ScheduleInfoTextField extends StatefulWidget {
-  final int index;
-  const ScheduleInfoTextField({super.key, required this.index});
-
-  @override
-  State<ScheduleInfoTextField> createState() => _ScheduleInfoTextFieldState();
-}
-
-class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
-  @override
-  Widget build(BuildContext context) {
-    String text = "";
-    switch (widget.index) {
-      case 0:
-        text = "Name";
-      case 1:
-        text = "Start Time";
-      case 2:
-        text = "Explanation";
-      case 3:
-        text = "End Time";
-      default:
-        text = "";
-    }
-
-    return Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 70,
-              child: Text(
-                  style: const TextStyle(fontSize: 12),
-                  textAlign: TextAlign.center,
-                  text),
-            ),
-            SizedBox(
-              width: textFieldSizeX,
-              height: textFieldSizeY,
-              child: TextField(
-                maxLength: 12,
-                decoration: const InputDecoration(
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 15.0, horizontal: 0.0),
-                ),
-                cursorHeight: 20,
-                textAlign: TextAlign.left,
-                onChanged: (value) {
-                  setState(() {
-                    switch (widget.index) {
-                      case 0:
-                        textfieldName = value;
-                      case 1:
-                        textfieldStartTime = value;
-                      case 2:
-                        textfieldExplanation = value;
-                      case 3:
-                        textfieldEndTime = value;
-                      default:
-                        text = "";
-                    }
-                  });
-                },
-              ),
-            ),
-          ],
-        ));
-  }
-}
-
-//month string to month index
-String convertWeekIntToStr(int argIndex) {
-  switch (argIndex) {
-    case 0:
-      return 'Sun';
-    case 1:
-      return 'Mon';
-    case 2:
-      return 'Tue';
-    case 3:
-      return 'Wed';
-    case 4:
-      return 'Thu';
-    case 5:
-      return 'Fri';
-    case 6:
-      return 'Sat';
-    default:
-      return '';
   }
 }
