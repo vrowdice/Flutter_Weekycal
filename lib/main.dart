@@ -299,6 +299,7 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
     List<int> scheduleInfoList = [];
     List<int> scheduleStartTimeList = [];
     List<int> scheduleEndTimeList = [];
+    List<int> btnOrder = [];
 
     // 일정 정보 추출
     for (int i = 0; i < schedule[widget.week].scheduleInfo.length; i++) {
@@ -308,20 +309,19 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
       scheduleEndTimeList.add(schedule[widget.week].scheduleInfo[i].endTime);
     }
 
+    //중간중간에 유동적으로 맞는 컨테이너를 삽입해야 함
+    //1시 30분 1시 40분 등 1시간 단위 처리가 아닌 분 단위 처리를 위해
+    
+
+
     if (schedule[widget.week].scheduleInfo.length <= 0) {
-      print(widget.week.toString());
       weekWidgetList.add(Container(width: weekContainerSizeX / 7));
     } else {
-      //여기에 빈 공간 처리 넣어야 함
-
+      btnOrder = List.filled(maxTime - minTime, -1);
       for (int i = 0; i < scheduleStartTimeList.length; i++) {
-        weekWidgetList.add(ScheduleBtn(
-            week: widget.week,
-            height:
-                (((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)) *
-                    (scheduleEndTimeList[i] / 60 -
-                        scheduleStartTimeList[i] / 60))));
+
       }
+      for (int i = 0; i < maxTime - minTime; i++) {}
     }
 
     return Column(
@@ -332,8 +332,8 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
 
 class ScheduleBtn extends StatefulWidget {
   final int week;
-  final double height;
-  const ScheduleBtn({super.key, required this.week, required this.height});
+  final int index;
+  const ScheduleBtn({super.key, required this.week, required this.index});
 
   @override
   State<ScheduleBtn> createState() => _ScheduleBtnState();
@@ -344,7 +344,10 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
   Widget build(BuildContext context) {
     return Container(
         width: weekContainerSizeX / 7,
-        height: widget.height,
+        height: (((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime)) *
+            (schedule[widget.week].scheduleInfo[widget.index].endTime / 60 -
+                schedule[widget.week].scheduleInfo[widget.index].startTime /
+                    60)),
         decoration:
             BoxDecoration(color: Colors.white, border: Border.all(width: 0.5)),
         child: ElevatedButton(
