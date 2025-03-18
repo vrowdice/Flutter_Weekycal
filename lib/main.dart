@@ -6,6 +6,7 @@ import 'package:home_widget/home_widget.dart';
 import 'dataClass.dart';
 import 'converter.dart';
 import 'saveData.dart';
+import 'saveLoad.dart';
 import 'option.dart';
 
 import 'package:weekycal/popup.dart';
@@ -226,6 +227,8 @@ class _MainAppState extends State<MainApp> {
               ],
             ),
             // Setting button
+            Positioned(top: 15, right: 105, child: SaveBtn()),
+            Positioned(top: 15, right: 60, child: LoadBtn()),
             Positioned(top: 15, right: 15, child: OptionBtn())
           ],
         ),
