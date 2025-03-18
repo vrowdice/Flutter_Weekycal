@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'saveData.dart';
-import 'popup.dart';
 
 //main window save button and function
+import 'package:flutter/material.dart';
+
 class SaveBtn extends StatefulWidget {
   const SaveBtn({super.key});
 
@@ -13,8 +14,8 @@ class SaveBtn extends StatefulWidget {
 }
 
 class _SaveBtnState extends State<SaveBtn> {
-  bool weekendToggle =
-      isRemoveWeekend; // Managing state for weekend toggle here.
+  final TextEditingController _textController =
+      TextEditingController(); // Controller to store user input
 
   void _showOptionsDialog(BuildContext context) {
     showDialog(
@@ -25,28 +26,39 @@ class _SaveBtnState extends State<SaveBtn> {
             'Save',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Enter Save File Name"),
-              TextField(
-                maxLength: 2,
-                cursorHeight: 15,
-                textAlign: TextAlign.left,
-                onChanged: (value) {},
-                decoration: const InputDecoration(
-                  counterText: "", // Removes character counter
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  border: OutlineInputBorder(),
+          content: SizedBox(
+            height: 70,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Enter Save File Name"),
+                TextField(
+                  controller:
+                      _textController, // Connect controller to store text input
+                  maxLength: 10, // Allow longer file names
+                  cursorHeight: 15,
+                  textAlign: TextAlign.left,
+                  decoration: const InputDecoration(
+                    counterText: "", // Remove character counter
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                String fileName = _textController.text.trim(); // Get user input
+
+                if (fileName.isNotEmpty) {
+                  saveScheduleData(fileName); // Save using entered name
+                }
+
+                Navigator.pop(context); // Close dialog
               },
               child: const Text('Apply'),
             ),
@@ -70,7 +82,7 @@ class _SaveBtnState extends State<SaveBtn> {
           Icons.file_download,
           size: 30,
         ),
-        onPressed: () => _showOptionsDialog(context),
+        onPressed: () => _showOptionsDialog(context), // Open save dialog
       ),
     );
   }
@@ -85,20 +97,27 @@ class LoadBtn extends StatefulWidget {
 }
 
 class _LoadBtnState extends State<LoadBtn> {
-  bool weekendToggle =
-      isRemoveWeekend; // Managing state for weekend toggle here.
-
   void _showOptionsDialog(BuildContext context) {
+    List<String> strList;
+    Future<void> loadSavedData() async {
+      strList =
+          await getSavedScheduleList(); // Await the Future to get the List<String>
+      print(strList); // Now you can use the list
+    }
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text(
-            'Options',
+            'Load',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: Column(
-            children: [],
+          content: SizedBox(
+            height: 250,
+            child: Column(
+              children: [],
+            ),
           ),
           actions: [
             TextButton(
