@@ -85,7 +85,7 @@ Future<void> main() async {
   runApp(const MainApp());
 }
 
-Future<void> SyncData() async {
+Future<void> syncData() async {
   if (isSyncWithSchaduleData.value) {
     return;
   }
@@ -168,7 +168,7 @@ void applyNowSchedule(BuildContext context) {
 
   scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
 
-  SyncData();
+  syncData();
 
   updateHomeWidget();
 }
@@ -184,7 +184,7 @@ void deleteNowSchedule() {
   scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
   isNewSchadule.value = true;
 
-  SyncData();
+  syncData();
 
   updateHomeWidget();
 }

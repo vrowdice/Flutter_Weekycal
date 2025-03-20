@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'dataClass.dart';
+import 'main.dart';
 
 // if true, weekends are removed
 bool isRemoveWeekend = true;
@@ -42,7 +43,7 @@ Future<void> loadData() async {
   isRemoveWeekend = prefs.getBool('isRemoveWeekend') ?? true; // Load isRemoveWeekend with default true
 }
 
-//save schadule data and this data is can loadable
+// Save schedule data (without minTime, maxTime, isRemoveWeekend)
 Future<void> saveScheduleData(String argSaveName) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -50,9 +51,6 @@ Future<void> saveScheduleData(String argSaveName) async {
       scheduleDataList.map((week) => jsonEncode(week.toJson())).toList();
 
   await prefs.setStringList('scheduleData_$argSaveName', encodedData);
-  await prefs.setInt('minTime_$argSaveName', minTime);
-  await prefs.setInt('maxTime_$argSaveName', maxTime);
-  await prefs.setBool('isRemoveWeekend_$argSaveName', isRemoveWeekend);
 
   List<String> saveList = prefs.getStringList('saveList') ?? [];
   if (!saveList.contains(argSaveName)) {
@@ -61,7 +59,7 @@ Future<void> saveScheduleData(String argSaveName) async {
   }
 }
 
-//Load saved data
+// Load saved data (without minTime, maxTime, isRemoveWeekend)
 Future<void> loadScheduleData(String argLoadName) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -74,21 +72,16 @@ Future<void> loadScheduleData(String argLoadName) async {
   } else {
     scheduleDataList = List.generate(7, (_) => WeekData());
   }
-
-  minTime = prefs.getInt('minTime_$argLoadName') ?? 6;
-  maxTime = prefs.getInt('maxTime_$argLoadName') ?? 24;
-  isRemoveWeekend = prefs.getBool('isRemoveWeekend_$argLoadName') ?? true;
+  
+  syncData();
+  updateHomeWidget();
 }
 
-// 🗑 Delete schedule data
+// Delete schedule data
 Future<void> deleteScheduleData(String argDeleteName) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  // Remove the specific schedule data
   await prefs.remove('scheduleData_$argDeleteName');
-  await prefs.remove('minTime_$argDeleteName');
-  await prefs.remove('maxTime_$argDeleteName');
-  await prefs.remove('isRemoveWeekend_$argDeleteName');
 
   // Update save list
   List<String> saveList = prefs.getStringList('saveList') ?? [];
@@ -96,8 +89,12 @@ Future<void> deleteScheduleData(String argDeleteName) async {
   await prefs.setStringList('saveList', saveList);
 }
 
-//load saved list
+// Load saved list (sorted)
 Future<List<String>> getSavedScheduleList() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  return prefs.getStringList('saveList') ?? [];
+  List<String> saveList = prefs.getStringList('saveList') ?? [];
+
+  saveList.sort();
+
+  return saveList;
 }

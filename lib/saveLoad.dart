@@ -110,7 +110,7 @@ class _LoadBtnState extends State<LoadBtn> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               content: SizedBox(
-                height: 250,
+                height: 350,
                 child: SingleChildScrollView(
                   child: Column(
                     children: strList.map((scheduleName) {
@@ -122,7 +122,10 @@ class _LoadBtnState extends State<LoadBtn> {
                               borderRadius: BorderRadius.circular(0),
                             ),
                           ),
-                          onPressed: () {}, // 선택 시 실행할 기능 추가 가능
+                          onPressed: () {
+                            loadScheduleData(scheduleName);
+                            Navigator.pop(context);
+                          },
                           child: SizedBox(
                             width: 200,
                             height: 50,
