@@ -59,10 +59,11 @@ class ScheduleInfoContainer extends StatelessWidget {
                   ),
                 ),
                 const Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ScheduleInfoTextField(index: 0),
-                    ScheduleInfoTextField(index: 1)
+                    ScheduleInfoTextField(index: 1),
+                    AlarmToggle()
                   ],
                 ),
               ],
@@ -408,6 +409,64 @@ Future<Color> showColorPickerDialog(
     },
   );
   return selectedColor;
+}
+
+class AlarmToggle extends StatefulWidget {
+  const AlarmToggle({super.key});
+
+  @override
+  _AlarmToggleState createState() => _AlarmToggleState();
+}
+
+class _AlarmToggleState extends State<AlarmToggle> {
+  bool isSwitched = false; // 알람 스위치 상태
+  TextEditingController _timeController =
+      TextEditingController(); // 텍스트 필드 컨트롤러
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const SizedBox(width: 10),
+        const Text(
+          "Alarm\nTime",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+        const SizedBox(width: 10),
+        // 알람 시간이 몇 분 전에 울릴지 설정하는 텍스트 필드
+        SizedBox(
+            width: 40,
+            height: 40,
+            child: TextField(
+              controller: _timeController,
+              keyboardType: TextInputType.number,
+              maxLength: 2,
+              maxLengthEnforcement: MaxLengthEnforcement.none,
+              decoration: const InputDecoration(
+                hintText: '10',
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+              style: const TextStyle(fontSize: 14),
+            )),
+        const SizedBox(width: 10),
+        // 스위치 크기 줄이기
+        Transform.scale(
+          scale: 0.9, // 스위치 크기 축소
+          child: Switch(
+            value: isSwitched,
+            onChanged: (bool value) {
+              setState(() {
+                isSwitched = value;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 // Color Picker Dialog widget
