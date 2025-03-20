@@ -25,20 +25,19 @@ class _SaveBtnState extends State<SaveBtn> {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: SizedBox(
-            height: 70,
+            height: 120,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Enter Save File Name"),
                 TextField(
-                  controller:
-                      _textController, // Connect controller to store text input
-                  maxLength: 10, // Allow longer file names
+                  controller: _textController,
+                  maxLength: 15,
                   cursorHeight: 15,
                   textAlign: TextAlign.left,
                   decoration: const InputDecoration(
-                    counterText: "", // Remove character counter
+                    counterText: "",
                     contentPadding:
                         EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                     border: OutlineInputBorder(),
@@ -49,14 +48,44 @@ class _SaveBtnState extends State<SaveBtn> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                String fileName = _textController.text.trim(); // Get user input
+              onPressed: () async {
+                String fileName = _textController.text.trim();
 
                 if (fileName.isNotEmpty) {
-                  saveScheduleData(fileName); // Save using entered name
+                  bool exists = await isFileNameExists(fileName);
+
+                  if (exists) {
+                    // if file is exist
+                    bool? overwrite = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Confirm Overwrite',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        content:
+                            Text('File "$fileName" already exists. Overwrite?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Yes'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('No'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (overwrite == true) {
+                      saveScheduleData(fileName);
+                    }
+                  } else {
+                    // if no same file name
+                    saveScheduleData(fileName);
+                  }
                 }
 
-                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Close save dialog
               },
               child: const Text('Apply'),
             ),
@@ -118,13 +147,39 @@ class _LoadBtnState extends State<LoadBtn> {
                         padding: const EdgeInsets.all(5),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(255, 40, 40, 40),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(0),
                             ),
                           ),
-                          onPressed: () {
-                            loadScheduleData(scheduleName);
-                            Navigator.pop(context);
+                          onPressed: () async {
+                            bool? confirmLoad = await showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Confirm Load',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                content: Text(
+                                    'Load "$scheduleName"?\nunsaved information will be lost.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Yes'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('No'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirmLoad == true) {
+                              loadScheduleData(scheduleName);
+                              Navigator.pop(context);
+                            }
                           },
                           child: SizedBox(
                             width: 200,

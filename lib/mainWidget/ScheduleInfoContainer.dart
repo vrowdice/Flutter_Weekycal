@@ -14,7 +14,7 @@ class ScheduleInfoContainer extends StatelessWidget {
         width: realContainerSizeX + 50,
         height: weekContainerSizeY / 2,
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 247, 242, 249),
+          color: const Color.fromARGB(255, 43, 43, 43),
           borderRadius: BorderRadius.circular(12),
           boxShadow: const [
             BoxShadow(
@@ -45,7 +45,7 @@ class ScheduleInfoContainer extends StatelessWidget {
                     width: 175,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 247, 242, 249),
+                      color: const Color.fromARGB(255, 32, 32, 32),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: const [
                         BoxShadow(

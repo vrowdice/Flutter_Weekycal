@@ -23,7 +23,7 @@ double maxTimeMin = 0.0;
 //schedule block size
 double weekTimeSizeX = 70.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 315.0;
+double weekContainerSizeX = 295.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
@@ -78,9 +78,8 @@ final ValueNotifier<Color> colorButtonColor =
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await loadData();
-    await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
-      .then((String? value) {
-  });
+  await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
+      .then((String? value) {});
   firstSetting();
   runApp(const MainApp());
 }
@@ -117,7 +116,8 @@ void firstSetting() {
 }
 
 void updateHomeWidget() async {
-  String jsonString = jsonEncode(scheduleDataList.map((e) => e.toJson()).toList());
+  String jsonString =
+      jsonEncode(scheduleDataList.map((e) => e.toJson()).toList());
   await HomeWidget.saveWidgetData<String>(dataID, jsonString);
   await HomeWidget.updateWidget(name: 'AppWidgetProvider');
 }
@@ -204,9 +204,29 @@ class _MainAppState extends State<MainApp> {
     loadData();
   }
 
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
+    return MaterialApp(
+      theme: ThemeData(
+        brightness: Brightness.dark, // 다크 모드 유지
+        scaffoldBackgroundColor: const Color.fromARGB(255, 10, 10, 10), // 배경 검은색
+        primaryColor: Color.fromARGB(255, 210, 210, 210), // 기본 색상 흰색으로 설정
+        colorScheme: const ColorScheme.dark(
+          primary: Color.fromARGB(255, 210, 210, 210), // 주요 색상을 흰색으로
+          secondary: Color.fromARGB(255, 210, 210, 210), // 보조 색상도 흰색으로
+          surface: Color.fromARGB(255, 50, 50, 50), // 배경 검은색
+          onPrimary: Colors.black, // primary 위의 글자색 (반전된 색상)
+          onSecondary: Colors.black, // secondary 위의 글자색
+          onSurface: Colors.white, // 기본 글자색을 흰색으로
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Color.fromARGB(255, 210, 210, 210)),
+          bodyMedium: TextStyle(color: Color.fromARGB(255, 210, 210, 210)),
+          titleLarge:
+              TextStyle(color: Color.fromARGB(255, 210, 210, 210), fontWeight: FontWeight.bold),
+        ),
+      ),
+      home: const Scaffold(
         resizeToAvoidBottomInset: true,
         body: Stack(
           children: [
@@ -214,21 +234,18 @@ class _MainAppState extends State<MainApp> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Flexible(
-                  // Use Flexible instead of Expanded
-                  flex: 1, // Optional: You can adjust the flex factor if needed
+                  flex: 1,
                   child: SingleChildScrollView(
                     physics: ClampingScrollPhysics(),
-                    child: ScheduleColumn(),
+                    child: MainScheduleColumn(),
                   ),
                 ),
-                // Set schedule info block
                 ScheduleInfoContainer(),
               ],
             ),
-            // Setting button
             Positioned(top: 15, right: 105, child: SaveBtn()),
             Positioned(top: 15, right: 60, child: LoadBtn()),
-            Positioned(top: 15, right: 15, child: OptionBtn())
+            Positioned(top: 15, right: 15, child: OptionBtn()),
           ],
         ),
       ),
@@ -236,14 +253,14 @@ class _MainAppState extends State<MainApp> {
   }
 }
 
-class ScheduleColumn extends StatefulWidget {
-  const ScheduleColumn({super.key});
+class MainScheduleColumn extends StatefulWidget {
+  const MainScheduleColumn({super.key});
 
   @override
-  State<ScheduleColumn> createState() => _ScheduleColumnState();
+  State<MainScheduleColumn> createState() => _MainScheduleColumnState();
 }
 
-class _ScheduleColumnState extends State<ScheduleColumn> {
+class _MainScheduleColumnState extends State<MainScheduleColumn> {
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -350,11 +367,19 @@ class WeekStateBlock extends StatelessWidget {
       }
     }
     return Container(
-      child: Text(convertWeekIntToStr(index)),
+      alignment: Alignment.center, // 텍스트를 가운데 정렬
       width: weekContainerSizeX / 7,
       height: weekInfoSizeY,
-      decoration:
-          BoxDecoration(color: Colors.white, border: Border.all(width: 1.0)),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border.all(width: 2.0),
+      ),
+      child: Text(
+        convertWeekIntToStr(index),
+        style:
+            const TextStyle(fontWeight: FontWeight.bold),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 }

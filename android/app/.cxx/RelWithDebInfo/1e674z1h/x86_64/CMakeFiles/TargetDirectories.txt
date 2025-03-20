@@ -1,0 +1,2 @@
+C:/Users/Vrowdice/Desktop/Project/Flutter/Weekycal/android/app/.cxx/RelWithDebInfo/1e674z1h/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/Vrowdice/Desktop/Project/Flutter/Weekycal/android/app/.cxx/RelWithDebInfo/1e674z1h/x86_64/CMakeFiles/rebuild_cache.dir

@@ -98,3 +98,9 @@ Future<List<String>> getSavedScheduleList() async {
 
   return saveList;
 }
+
+//if file name is exist return true
+Future<bool> isFileNameExists(String fileName) async {
+  List<String> saveList = await getSavedScheduleList();
+  return saveList.contains(fileName);
+}
