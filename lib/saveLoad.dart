@@ -88,7 +88,6 @@ class _SaveBtnState extends State<SaveBtn> {
   }
 }
 
-//main window load button and function
 class LoadBtn extends StatefulWidget {
   const LoadBtn({super.key});
 
@@ -97,40 +96,74 @@ class LoadBtn extends StatefulWidget {
 }
 
 class _LoadBtnState extends State<LoadBtn> {
-  void _showOptionsDialog(BuildContext context) {
-    List<String> strList;
-    Future<void> loadSavedData() async {
-      strList =
-          await getSavedScheduleList(); // Await the Future to get the List<String>
-      print(strList); // Now you can use the list
-    }
+  Future<void> _showOptionsDialog(BuildContext context) async {
+    List<String> strList = await getSavedScheduleList(); // 저장된 리스트 로드
+
+    if (!mounted) return; // 다이얼로그가 사라지는 경우 방지
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text(
-            'Load',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          content: SizedBox(
-            height: 250,
-            child: Column(
-              children: [],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Apply'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text(
+                'Load',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              content: SizedBox(
+                height: 250,
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: strList.map((scheduleName) {
+                      return Padding(
+                        padding: const EdgeInsets.all(5),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(0),
+                            ),
+                          ),
+                          onPressed: () {}, // 선택 시 실행할 기능 추가 가능
+                          child: SizedBox(
+                            width: 200,
+                            height: 50,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(scheduleName),
+                                IconButton(
+                                  onPressed: () async {
+                                    await deleteScheduleData(scheduleName);
+                                    List<String> updatedList =
+                                        await getSavedScheduleList();
+
+                                    setStateDialog(() {
+                                      strList = updatedList; // 다이얼로그 내부 UI 업데이트
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    size: 30,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

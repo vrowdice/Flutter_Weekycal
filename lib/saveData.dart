@@ -80,6 +80,22 @@ Future<void> loadScheduleData(String argLoadName) async {
   isRemoveWeekend = prefs.getBool('isRemoveWeekend_$argLoadName') ?? true;
 }
 
+// 🗑 Delete schedule data
+Future<void> deleteScheduleData(String argDeleteName) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  // Remove the specific schedule data
+  await prefs.remove('scheduleData_$argDeleteName');
+  await prefs.remove('minTime_$argDeleteName');
+  await prefs.remove('maxTime_$argDeleteName');
+  await prefs.remove('isRemoveWeekend_$argDeleteName');
+
+  // Update save list
+  List<String> saveList = prefs.getStringList('saveList') ?? [];
+  saveList.remove(argDeleteName);
+  await prefs.setStringList('saveList', saveList);
+}
+
 //load saved list
 Future<List<String>> getSavedScheduleList() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();

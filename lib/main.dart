@@ -80,7 +80,6 @@ Future<void> main() async {
   await loadData();
     await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
       .then((String? value) {
-    print("현재 홈 위젯 스케줄: $value");
   });
   firstSetting();
   runApp(const MainApp());
