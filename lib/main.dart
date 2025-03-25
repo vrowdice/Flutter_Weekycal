@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
@@ -14,6 +15,9 @@ import 'mainWidget/weekBtn.dart';
 import 'mainWidget/ScheduleBtn.dart';
 import 'mainWidget/ScheduleInfoContainer.dart';
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 //schedule first setting
 int week = 7;
 double minTimeMin = 0.0;
@@ -23,7 +27,7 @@ double maxTimeMin = 0.0;
 //schedule block size
 double weekTimeSizeX = 70.0;
 double weekTimeSizeY = 450.0;
-double weekContainerSizeX = 295.0;
+double weekContainerSizeX = 290.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
 double weekBtnHight = 0.0;
@@ -58,7 +62,7 @@ void sortSchedulesByStartTime(List<ScheduleData> schedules) {
 
 //text field controllers
 //using info container schadule set textfield
-List<TextEditingController> schaduleSetTextFieldControllers = [
+List<TextEditingController> scheduleSetTextFieldControllers = [
   TextEditingController(),
   TextEditingController(),
   // Add controllers for other text fields if necessary
@@ -67,12 +71,12 @@ List<TextEditingController> schaduleSetTextFieldControllers = [
 //using info container time set textfield
 TextEditingController alarmTimeTextFieldControllers = TextEditingController();
 //info container alarm boolen
-final ValueNotifier<bool> alarmTogleFlag = ValueNotifier<bool>(false);
+final ValueNotifier<bool> alarmToggleFlag = ValueNotifier<bool>(false);
 
 //if this flag turn true than sync schadule and turn again to false
 final ValueNotifier<bool> isSyncWithSchaduleData = ValueNotifier(false);
 //if is new schadule = true
-final ValueNotifier<bool> isNewSchadule = ValueNotifier(false);
+final ValueNotifier<bool> isNewSchedule = ValueNotifier(false);
 //time input field controllers
 final ValueNotifier<TimeOfDay> startTimeNotifier =
     ValueNotifier(const TimeOfDay(hour: 9, minute: 0));
@@ -84,10 +88,24 @@ final ValueNotifier<Color> colorButtonColor =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  WidgetsFlutterBinding.ensureInitialized();
   await loadData();
+  //home widget activate
   await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
       .then((String? value) {});
+
   firstSetting();
+
   runApp(const MainApp());
 }
 
@@ -156,16 +174,26 @@ void applyNowSchedule(BuildContext context) {
 
   // Create a new schedule object with the data from the input fields
   ScheduleData nowSchedule = ScheduleData()
-    ..name = schaduleSetTextFieldControllers[0].text
-    ..explanation = schaduleSetTextFieldControllers[1].text
+    ..name = scheduleSetTextFieldControllers[0].text
+    ..explanation = scheduleSetTextFieldControllers[1].text
     ..startTime = startTimeInMinutes
     ..endTime = endTimeInMinutes
     ..btnColor = colorButtonColor.value;
 
+  // Handle alarm time and isAlarm flag
+  try {
+    nowSchedule.alarmTime = int.parse(alarmTimeTextFieldControllers.text);
+  } catch (e) {
+    showWarningDialog(context, "Invalid alarm time input.");
+    return;
+  }
+
+  nowSchedule.isAlarm = alarmToggleFlag.value;
+
   // Add or update the schedule depending on whether it's a new schedule or not
-  if (isNewSchadule.value) {
+  if (isNewSchedule.value) {
     scheduleDataList[nowWeekIndex].scheduleInfo.add(nowSchedule);
-    isNewSchadule.value = false;
+    isNewSchedule.value = false;
   } else {
     if (nowScheduleIndex < 0) {
       return;
@@ -189,7 +217,7 @@ void deleteNowSchedule() {
 
   scheduleDataList[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
   scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
-  isNewSchadule.value = true;
+  isNewSchedule.value = true;
 
   syncData();
 
@@ -216,7 +244,8 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       theme: ThemeData(
         brightness: Brightness.dark, // 다크 모드 유지
-        scaffoldBackgroundColor: const Color.fromARGB(255, 10, 10, 10), // 배경 검은색
+        scaffoldBackgroundColor:
+            const Color.fromARGB(255, 10, 10, 10), // 배경 검은색
         primaryColor: Color.fromARGB(255, 210, 210, 210), // 기본 색상 흰색으로 설정
         colorScheme: const ColorScheme.dark(
           primary: Color.fromARGB(255, 210, 210, 210), // 주요 색상을 흰색으로
@@ -229,8 +258,9 @@ class _MainAppState extends State<MainApp> {
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Color.fromARGB(255, 210, 210, 210)),
           bodyMedium: TextStyle(color: Color.fromARGB(255, 210, 210, 210)),
-          titleLarge:
-              TextStyle(color: Color.fromARGB(255, 210, 210, 210), fontWeight: FontWeight.bold),
+          titleLarge: TextStyle(
+              color: Color.fromARGB(255, 210, 210, 210),
+              fontWeight: FontWeight.bold),
         ),
       ),
       home: const Scaffold(
@@ -383,8 +413,7 @@ class WeekStateBlock extends StatelessWidget {
       ),
       child: Text(
         convertWeekIntToStr(index),
-        style:
-            const TextStyle(fontWeight: FontWeight.bold),
+        style: const TextStyle(fontWeight: FontWeight.bold),
         textAlign: TextAlign.center,
       ),
     );

@@ -11,7 +11,7 @@ class ScheduleInfoContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        width: realContainerSizeX + 50,
+        width: realContainerSizeX + 65,
         height: weekContainerSizeY / 2,
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 43, 43, 43),
@@ -33,7 +33,7 @@ class ScheduleInfoContainer extends StatelessWidget {
                 Padding(
                     padding: const EdgeInsets.all(5.0),
                     child: ContainerTitleText(
-                        isNewScheduleNotifier: isNewSchadule)),
+                        isNewScheduleNotifier: isNewSchedule)),
                 const ScheduleControlRow()
               ],
             ),
@@ -42,7 +42,7 @@ class ScheduleInfoContainer extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(5),
                   child: Container(
-                    width: 175,
+                    width: 160,
                     height: 120,
                     decoration: BoxDecoration(
                       color: const Color.fromARGB(255, 32, 32, 32),
@@ -128,7 +128,7 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
     }
 
     // textFieldControllers controller will be used
-    TextEditingController controller = schaduleSetTextFieldControllers[widget.index];
+    TextEditingController controller = scheduleSetTextFieldControllers[widget.index];
 
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -174,8 +174,8 @@ class TimePickerColum extends StatefulWidget {
 }
 
 class _TimePickerColumState extends State<TimePickerColum> {
-  Color startTimeButtonColor = Colors.blue; // Start time button color
-  Color endTimeButtonColor = Colors.green; // End time button color
+  Color startTimeButtonColor = const Color.fromARGB(255, 252, 252, 252); // Start time button color
+  Color endTimeButtonColor = const Color.fromARGB(255, 0, 0, 0); // End time button color
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +219,7 @@ class _TimePickerColumState extends State<TimePickerColum> {
               builder: (context, startTime, _) {
                 return Text(
                   'Start: ${startTime.format(context)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  style: const TextStyle(color: Colors.black, fontSize: 12),
                 );
               },
             ),
@@ -301,7 +301,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
       Padding(
         padding: const EdgeInsets.all(5),
         child: SizedBox(
-            width: realContainerSizeX / 4,
+            width: realContainerSizeX / 4 + 5,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
               onPressed: () {
@@ -322,7 +322,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
       Padding(
         padding: const EdgeInsets.all(5),
         child: SizedBox(
-            width: realContainerSizeX / 4,
+            width: realContainerSizeX / 4 + 5,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
                 onPressed: () {
@@ -360,15 +360,15 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
           "Button Color: ",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        // ValueListenableBuilder를 사용하여 colorButtonColor 값 변경 시 UI 업데이트
+        // ValueListenableBuilder change colorButtonColor value 
         ValueListenableBuilder<Color>(
-          valueListenable: colorButtonColor, // 값을 리스닝하는 위젯
+          valueListenable: colorButtonColor,
           builder: (context, color, child) {
             return SizedBox(
               height: 25,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: color, // colorButtonColor.value 사용
+                  backgroundColor: color, // colorButtonColor.value use
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(0),
                   ),
@@ -376,7 +376,6 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
                 onPressed: () async {
                   Color selectedColor =
                       await showColorPickerDialog(context, color);
-                  // 색상 선택 후 value 변경
                   colorButtonColor.value = selectedColor;
                 },
                 child: const Text(""),
@@ -415,7 +414,6 @@ class AlarmToggle extends StatefulWidget {
 }
 
 class _AlarmToggleState extends State<AlarmToggle> {
-  bool isSwitched = false; // switch state
   final TextEditingController _timeController =
       alarmTimeTextFieldControllers;
 
@@ -448,21 +446,26 @@ class _AlarmToggleState extends State<AlarmToggle> {
               style: const TextStyle(fontSize: 14),
             )),
         const SizedBox(width: 10),
-        Transform.scale(
-          scale: 0.9,
-          child: Switch(
-            value: isSwitched,
-            onChanged: (bool value) {
-              setState(() {
-                isSwitched = value;
-              });
-            },
-          ),
+        // Use ValueListenableBuilder to rebuild when the value changes
+        ValueListenableBuilder<bool>(
+          valueListenable: alarmToggleFlag,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: 0.9,
+              child: Switch(
+                value: value,
+                onChanged: (bool newValue) {
+                  alarmToggleFlag.value = newValue; // Update the ValueNotifier
+                },
+              ),
+            );
+          },
         ),
       ],
     );
   }
 }
+
 
 // Color Picker Dialog widget
 class ColorPickerDialog extends StatelessWidget {

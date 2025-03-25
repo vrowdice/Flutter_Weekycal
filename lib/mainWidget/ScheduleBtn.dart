@@ -31,7 +31,9 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
       double sumHeight = 0.0; // Accumulated height of the widgets
       double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
-      for (int i = 0; i < scheduleDataList[widget.index].scheduleInfo.length; i++) {
+      for (int i = 0;
+          i < scheduleDataList[widget.index].scheduleInfo.length;
+          i++) {
         var info = scheduleDataList[widget.index].scheduleInfo[i];
 
         if (info.startTime / 60 < minTime || info.endTime / 60 > maxTime) {
@@ -88,22 +90,11 @@ class ScheduleBtn extends StatefulWidget {
 class _ScheduleBtnState extends State<ScheduleBtn> {
   @override
   Widget build(BuildContext context) {
-    Color btnColor = scheduleDataList[widget.weekIndex]
-        .scheduleInfo[widget.scheduleIndex]
-        .btnColor;
-    bool explanationVisible = true;
-
-    if (scheduleDataList[widget.weekIndex]
-                .scheduleInfo[widget.scheduleIndex]
-                .endTime -
-            scheduleDataList[widget.weekIndex]
-                .scheduleInfo[widget.scheduleIndex]
-                .startTime <
-        120) {
-      explanationVisible = false;
-    } else {
-      explanationVisible = true;
-    }
+    // Extracting the schedule data for easier access
+    var schedule =
+        scheduleDataList[widget.weekIndex].scheduleInfo[widget.scheduleIndex];
+    Color btnColor = schedule.btnColor;
+    bool explanationVisible = (schedule.endTime - schedule.startTime) >= 120;
 
     return Container(
       width: weekContainerSizeX / 7,
@@ -118,62 +109,54 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
           ),
         ),
         onPressed: () {
-          String name = scheduleDataList[widget.weekIndex]
-              .scheduleInfo[widget.scheduleIndex]
-              .name;
-          String explanation = scheduleDataList[widget.weekIndex]
-              .scheduleInfo[widget.scheduleIndex]
-              .explanation;
-          int startTime = scheduleDataList[widget.weekIndex]
-              .scheduleInfo[widget.scheduleIndex]
-              .startTime;
-          int endTime = scheduleDataList[widget.weekIndex]
-              .scheduleInfo[widget.scheduleIndex]
-              .endTime;
-
           nowWeekIndex = widget.weekIndex;
           nowScheduleIndex = widget.scheduleIndex;
 
           setState(() {
-            // 텍스트 필드의 컨트롤러만 업데이트
-            schaduleSetTextFieldControllers[0].text = name;
-            schaduleSetTextFieldControllers[1].text = explanation;
-            startTimeNotifier.value =
-                TimeOfDay(hour: startTime ~/ 60, minute: startTime % 60);
-            endTimeNotifier.value =
-                TimeOfDay(hour: endTime ~/ 60, minute: endTime % 60);
+            // Updating text field controllers
+            scheduleSetTextFieldControllers[0].text = schedule.name;
+            scheduleSetTextFieldControllers[1].text = schedule.explanation;
+            alarmTimeTextFieldControllers.text = schedule.alarmTime?.toString() ?? ''; // Handle null alarmTime
+            alarmToggleFlag.value = schedule.isAlarm;
+            startTimeNotifier.value = TimeOfDay(
+                hour: schedule.startTime ~/ 60,
+                minute: schedule.startTime % 60);
+            endTimeNotifier.value = TimeOfDay(
+                hour: schedule.endTime ~/ 60, minute: schedule.endTime % 60);
             colorButtonColor.value = btnColor;
 
-            isNewSchadule.value = false;
+            isNewSchedule.value = false;
           });
         },
         child: OverflowBox(
-            maxWidth: double.infinity, // 텍스트가 컨테이너를 초과할 수 있도록 함
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "${scheduleDataList[widget.weekIndex].scheduleInfo[widget.scheduleIndex].name}", // 텍스트
+          maxWidth: double.infinity, // Allowing text to overflow if necessary
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                schedule.name, // Schedule name
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10.0,
+                  overflow:
+                      TextOverflow.visible, // Allow text to overflow if needed
+                ),
+              ),
+              Visibility(
+                visible: explanationVisible,
+                child: Text(
+                  schedule.explanation, // Schedule explanation
                   style: const TextStyle(
                     color: Colors.black,
-                    fontWeight: FontWeight.bold,
                     fontSize: 10.0,
-                    overflow: TextOverflow.visible, // 텍스트가 넘칠 수 있도록 설정
+                    overflow: TextOverflow.visible,
                   ),
                 ),
-                Visibility(
-                  visible: explanationVisible,
-                  child: Text(
-                    "${scheduleDataList[widget.weekIndex].scheduleInfo[widget.scheduleIndex].explanation}",
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 10.0,
-                      overflow: TextOverflow.visible,
-                    ),
-                  ),
-                )
-              ],
-            )),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -57,7 +57,7 @@ class WeekBtnState extends State<WeekBtn> {
                 endTimeNotifier.value =
                     TimeOfDay(hour: widget.time + 1, minute: 0);
 
-                isNewSchadule.value = true;
+                isNewSchedule.value = true;
               });
             },
             child: Container()));

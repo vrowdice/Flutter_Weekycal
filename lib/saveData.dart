@@ -74,6 +74,7 @@ Future<void> loadScheduleData(String argLoadName) async {
   }
   
   syncData();
+
   updateHomeWidget();
 }
 

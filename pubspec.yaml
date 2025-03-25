@@ -12,6 +12,7 @@ dependencies:
   flutter_colorpicker: ^1.0.0
   shared_preferences: ^2.0.8
   home_widget:
+  flutter_local_notifications: ^17.2.4
 
 dev_dependencies:
   flutter_test:

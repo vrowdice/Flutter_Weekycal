@@ -37,9 +37,11 @@ class WeekData {
 
 class ScheduleData {
   String name = "";
+  String explanation = "";
+  bool isAlarm = false;
   int startTime = 0;
   int endTime = 0;
-  String explanation = "";
+  int alarmTime = 0;
   Color btnColor = Colors.white;
 
   // Convert Schedule object to JSON
@@ -49,15 +51,19 @@ class ScheduleData {
         'endTime': endTime,
         'explanation': explanation,
         'btnColor': btnColor.value, // Color를 int로 저장
+        'isAlarm': isAlarm,
+        'alarmTime': alarmTime,
       };
 
   // Create Schedule object from JSON
   ScheduleData.fromJson(Map<String, dynamic> json) {
-    name = json['name'] ?? ""; // null이면 빈 문자열 사용
-    startTime = json['startTime'] ?? 0; // null이면 0 사용
+    name = json['name'] ?? "";
+    startTime = json['startTime'] ?? 0;
     endTime = json['endTime'] ?? 0;
     explanation = json['explanation'] ?? "";
-    btnColor = Color(json['btnColor'] ?? Colors.white.value); // null이면 흰색
+    btnColor = Color(json['btnColor'] ?? Colors.white.value);
+    isAlarm = json['isAlarm'] ?? false;
+    alarmTime = json['alarmTime'] ?? 0;
   }
 
   String toJsonString() => jsonEncode(toJson());
