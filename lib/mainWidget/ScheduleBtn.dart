@@ -136,8 +136,8 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
 
           setState(() {
             // 텍스트 필드의 컨트롤러만 업데이트
-            textFieldControllers[0].text = name;
-            textFieldControllers[1].text = explanation;
+            schaduleSetTextFieldControllers[0].text = name;
+            schaduleSetTextFieldControllers[1].text = explanation;
             startTimeNotifier.value =
                 TimeOfDay(hour: startTime ~/ 60, minute: startTime % 60);
             endTimeNotifier.value =

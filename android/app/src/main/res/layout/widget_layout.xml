@@ -24,20 +24,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Sun"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>
@@ -53,20 +53,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Mon"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>
@@ -82,20 +82,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Tue"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_3"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>
@@ -111,20 +111,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Wed"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_4"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>
@@ -140,20 +140,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Thu"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_5"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>
@@ -169,20 +169,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Fri"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_6"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>
@@ -198,20 +198,20 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Sat"
-                android:textColor="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="15sp"
                 android:textAlignment="center"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textStyle="bold"/> <!-- Add bold style and white background here -->
+                android:background="@android:color/black"
+                android:textStyle="bold"/> <!-- Add bold style and black background here -->
 
             <TextView
                 android:id="@+id/tv_schedule_name_7"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingBottom="4dp"
-                android:background="@android:color/white"
-                android:textColor="@android:color/black"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
                 android:textSize="11sp"
                 android:textStyle="normal"/>
         </LinearLayout>

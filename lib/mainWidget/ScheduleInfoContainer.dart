@@ -127,8 +127,8 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
         label = "";
     }
 
-    // 전역변수로 사용되는 textFieldControllers에서 컨트롤러 참조
-    TextEditingController controller = textFieldControllers[widget.index];
+    // textFieldControllers controller will be used
+    TextEditingController controller = schaduleSetTextFieldControllers[widget.index];
 
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -143,8 +143,8 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
             ),
           ),
           SizedBox(
-            width: 120, // 적절한 크기 설정
-            height: 25, // 적절한 높이 설정
+            width: 120,
+            height: 25,
             child: TextField(
               maxLength: 13,
               keyboardType: TextInputType.text,
@@ -155,12 +155,8 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
               ),
               cursorHeight: 15,
               textAlign: TextAlign.left,
-              controller: controller, // 전역 변수 사용
-              onChanged: (value) {
-                setState(() {
-                  // 상태 변경이 필요하면 여기에 추가 작업
-                });
-              },
+              controller: controller,
+              onChanged: (value) {},
             ),
           ),
         ],
@@ -419,9 +415,9 @@ class AlarmToggle extends StatefulWidget {
 }
 
 class _AlarmToggleState extends State<AlarmToggle> {
-  bool isSwitched = false; // 알람 스위치 상태
-  TextEditingController _timeController =
-      TextEditingController(); // 텍스트 필드 컨트롤러
+  bool isSwitched = false; // switch state
+  final TextEditingController _timeController =
+      alarmTimeTextFieldControllers;
 
   @override
   Widget build(BuildContext context) {
@@ -434,7 +430,6 @@ class _AlarmToggleState extends State<AlarmToggle> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
         ),
         const SizedBox(width: 10),
-        // 알람 시간이 몇 분 전에 울릴지 설정하는 텍스트 필드
         SizedBox(
             width: 40,
             height: 40,
@@ -448,13 +443,13 @@ class _AlarmToggleState extends State<AlarmToggle> {
                 border: OutlineInputBorder(),
                 contentPadding:
                     EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                counterText: '',
               ),
               style: const TextStyle(fontSize: 14),
             )),
         const SizedBox(width: 10),
-        // 스위치 크기 줄이기
         Transform.scale(
-          scale: 0.9, // 스위치 크기 축소
+          scale: 0.9,
           child: Switch(
             value: isSwitched,
             onChanged: (bool value) {

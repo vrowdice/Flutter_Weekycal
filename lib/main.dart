@@ -40,6 +40,7 @@ String textfieldExplanation = "";
 String textfieldStartTime = "";
 String textfieldEndTime = "";
 
+//this var used in home widget provide id
 String dataID = "schedule_data";
 
 //scheduleInfoContanier time select button size
@@ -56,11 +57,17 @@ void sortSchedulesByStartTime(List<ScheduleData> schedules) {
 }
 
 //text field controllers
-List<TextEditingController> textFieldControllers = [
+//using info container schadule set textfield
+List<TextEditingController> schaduleSetTextFieldControllers = [
   TextEditingController(),
   TextEditingController(),
   // Add controllers for other text fields if necessary
 ];
+
+//using info container time set textfield
+TextEditingController alarmTimeTextFieldControllers = TextEditingController();
+//info container alarm boolen
+final ValueNotifier<bool> alarmTogleFlag = ValueNotifier<bool>(false);
 
 //if this flag turn true than sync schadule and turn again to false
 final ValueNotifier<bool> isSyncWithSchaduleData = ValueNotifier(false);
@@ -68,9 +75,9 @@ final ValueNotifier<bool> isSyncWithSchaduleData = ValueNotifier(false);
 final ValueNotifier<bool> isNewSchadule = ValueNotifier(false);
 //time input field controllers
 final ValueNotifier<TimeOfDay> startTimeNotifier =
-    ValueNotifier(TimeOfDay(hour: 9, minute: 0));
+    ValueNotifier(const TimeOfDay(hour: 9, minute: 0));
 final ValueNotifier<TimeOfDay> endTimeNotifier =
-    ValueNotifier(TimeOfDay(hour: 10, minute: 0));
+    ValueNotifier(const TimeOfDay(hour: 10, minute: 0));
 // Global variable to manage button color
 final ValueNotifier<Color> colorButtonColor =
     ValueNotifier<Color>(Colors.white);
@@ -149,8 +156,8 @@ void applyNowSchedule(BuildContext context) {
 
   // Create a new schedule object with the data from the input fields
   ScheduleData nowSchedule = ScheduleData()
-    ..name = textFieldControllers[0].text
-    ..explanation = textFieldControllers[1].text
+    ..name = schaduleSetTextFieldControllers[0].text
+    ..explanation = schaduleSetTextFieldControllers[1].text
     ..startTime = startTimeInMinutes
     ..endTime = endTimeInMinutes
     ..btnColor = colorButtonColor.value;
