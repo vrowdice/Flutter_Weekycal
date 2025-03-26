@@ -4,8 +4,8 @@ import 'package:weekycal/main.dart';
 import 'package:weekycal/saveData.dart';
 
 class ScheduleBtnColumn extends StatefulWidget {
-  final int index;
-  const ScheduleBtnColumn({super.key, required this.index});
+  final int weekIndex;
+  const ScheduleBtnColumn({super.key, required this.weekIndex});
 
   @override
   State<ScheduleBtnColumn> createState() => _ScheduleBtnColumnState();
@@ -15,13 +15,13 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
   @override
   Widget build(BuildContext context) {
     if (isRemoveWeekend) {
-      if (widget.index == 0 || widget.index >= week - 1) {
+      if (widget.weekIndex == 0 || widget.weekIndex >= week - 1) {
         return const SizedBox();
       }
     }
     List<Widget> weekWidgetList = []; // Initialize an empty list of widgets
 
-    if (scheduleDataList[widget.index].scheduleInfo.isEmpty) {
+    if (scheduleDataList[widget.weekIndex].scheduleInfo.isEmpty) {
       // If there are no schedules, add an empty container
       return SizedBox(
         width: weekContainerSizeX / 7,
@@ -32,9 +32,9 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
       double minHeightOffset = minTimeMin * weekBtnHightForMin;
 
       for (int i = 0;
-          i < scheduleDataList[widget.index].scheduleInfo.length;
+          i < scheduleDataList[widget.weekIndex].scheduleInfo.length;
           i++) {
-        var info = scheduleDataList[widget.index].scheduleInfo[i];
+        var info = scheduleDataList[widget.weekIndex].scheduleInfo[i];
 
         if (info.startTime / 60 < minTime || info.endTime / 60 > maxTime) {
           continue;
@@ -56,7 +56,7 @@ class _ScheduleBtnColumnState extends State<ScheduleBtnColumn> {
 
         // Add the schedule button
         weekWidgetList.add(ScheduleBtn(
-          weekIndex: widget.index,
+          weekIndex: widget.weekIndex,
           scheduleIndex: i, // Use the index here as well
           height: scheduleBtnHeight,
         ));
@@ -116,7 +116,7 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
             // Updating text field controllers
             scheduleSetTextFieldControllers[0].text = schedule.name;
             scheduleSetTextFieldControllers[1].text = schedule.explanation;
-            alarmTimeTextFieldControllers.text = schedule.alarmTime?.toString() ?? ''; // Handle null alarmTime
+            alarmTimeTextFieldControllers.text = schedule.alarmTime.toString(); // Handle null alarmTime
             alarmToggleFlag.value = schedule.isAlarm;
             startTimeNotifier.value = TimeOfDay(
                 hour: schedule.startTime ~/ 60,

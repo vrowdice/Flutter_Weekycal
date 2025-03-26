@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // warning dialog met
 void showWarningDialog(BuildContext context, String message) {
@@ -14,7 +15,7 @@ void showWarningDialog(BuildContext context, String message) {
         actions: <Widget>[
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // 다이얼로그 닫기
+              Navigator.of(context).pop();
             },
             child: const Text('OK'),
           ),
@@ -22,4 +23,82 @@ void showWarningDialog(BuildContext context, String message) {
       );
     },
   );
+}
+
+// Dialog informing the user about the need for exact alarm permission when it's denied
+void showPermissionDeniedDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Exact Alarm Permission Required'),
+        content: Text('To use the exact alarm feature, you must grant the exact alarm permission. You can change the permission in the settings.'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('Close'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: Text('Go to Settings'),
+            onPressed: () {
+              openAppSettings();
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+// Dialog informing the user when exact alarm permission is permanently denied
+void showPermissionPermanentlyDeniedDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Exact Alarm Permission Required'),
+        content: Text('To use the exact alarm feature, you must enable the exact alarm permission in your device settings.'),
+        actions: <Widget>[
+          TextButton(
+            child: Text('OK'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: Text('Open Settings'),
+            onPressed: () {
+              openAppSettings();
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _navigateToAppSettings() async {
+  if (await openAppSettings()) {
+    print('The settings screen has been opened.');
+    // Since the user may have changed the settings, you can add logic to check the permission status again if needed.
+  } else {
+    print('Could not open the settings screen.');
+    // Handle the case where the settings screen could not be opened
+  }
+}
+
+// For example, you can use this button to navigate to the settings screen when clicked.
+class OpenSettingsButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: _navigateToAppSettings,
+      child: Text('Open App Settings'),
+    );
+  }
 }

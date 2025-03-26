@@ -1,3 +1,5 @@
+import 'dataClass.dart';
+
 //month string to month index
 String convertWeekIntToStr(int argIndex) {
   switch (argIndex) {
@@ -18,4 +20,9 @@ String convertWeekIntToStr(int argIndex) {
     default:
       return '';
   }
+}
+
+String generateScheduleId(ScheduleData schedule) {
+  // inherence ID generate
+  return '${schedule.startTime}_${schedule.endTime}_${schedule.name}';
 }

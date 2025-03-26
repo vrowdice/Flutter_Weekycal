@@ -44,13 +44,26 @@ class ScheduleData {
   int alarmTime = 0;
   Color btnColor = Colors.white;
 
+  DateTime getAlarmTime(int argMin) {
+    //get now date
+    DateTime today = DateTime.now();
+
+    int hours = startTime ~/ 60;
+    int minutes = startTime % 60;
+    DateTime scheduleTime =
+        DateTime(today.year, today.month, today.day, hours, minutes);
+    
+    return scheduleTime
+        .subtract(Duration(minutes: argMin));
+  }
+
   // Convert Schedule object to JSON
   Map<String, dynamic> toJson() => {
         'name': name,
         'startTime': startTime,
         'endTime': endTime,
         'explanation': explanation,
-        'btnColor': btnColor.value, // Color를 int로 저장
+        'btnColor': btnColor.value,
         'isAlarm': isAlarm,
         'alarmTime': alarmTime,
       };

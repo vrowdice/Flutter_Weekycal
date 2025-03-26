@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:permission_handler/permission_handler.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
@@ -69,7 +72,8 @@ List<TextEditingController> scheduleSetTextFieldControllers = [
 ];
 
 //using info container time set textfield
-TextEditingController alarmTimeTextFieldControllers = TextEditingController();
+TextEditingController alarmTimeTextFieldControllers =
+    TextEditingController(text: '0');
 //info container alarm boolen
 final ValueNotifier<bool> alarmToggleFlag = ValueNotifier<bool>(false);
 
@@ -98,13 +102,15 @@ Future<void> main() async {
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
+  tz.initializeTimeZones();
+
   WidgetsFlutterBinding.ensureInitialized();
   await loadData();
   //home widget activate
   await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
       .then((String? value) {});
 
-  firstSetting();
+  initialization();
 
   runApp(const MainApp());
 }
@@ -118,7 +124,7 @@ Future<void> syncData() async {
 
   try {
     // Running the synchronization process
-    await Future.delayed(Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 500));
     print("Data sync complete.");
   } catch (e) {
     print("Sync error: $e");
@@ -129,7 +135,117 @@ Future<void> syncData() async {
   await saveData();
 }
 
-void firstSetting() {
+ScheduleData getNowScheduleData() {
+  if (nowWeekIndex < 0 ||
+      nowWeekIndex >= scheduleDataList.length ||
+      nowScheduleIndex < 0 ||
+      nowScheduleIndex >= scheduleDataList[nowWeekIndex].scheduleInfo.length) {
+    print("Invalid index");
+    return ScheduleData();
+  }
+  return scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex];
+}
+
+void firstRequestExactAlarmPermission() async {
+  final status = await Permission.scheduleExactAlarm.request();
+  if (status.isGranted) {
+    print('Exact alarm permission has been granted.');
+  } else if (status.isDenied) {
+    print('Exact alarm permission has been denied.');
+  } else if (status.isPermanentlyDenied) {
+    print('Exact alarm permission has been permanently denied. You need to change it in the settings.');
+  }
+}
+
+void requestExactAlarmPermission(
+    BuildContext context, ScheduleData argScheduelData) async {
+  print("Requesting exact alarm permission...");
+  final status = await Permission.notification
+      .request(); // Requesting notification permission
+
+  if (status.isGranted) {
+    print("Exact alarm permission granted.");
+    setAlarmForSchedule(
+        argScheduelData, context); // Set alarm if permission is granted
+  } else if (status.isDenied) {
+    print("Exact alarm permission denied.");
+    // Show dialog to inform the user that the permission is required
+    showPermissionDeniedDialog(context);
+  } else if (status.isPermanentlyDenied) {
+    print("Exact alarm permission permanently denied.");
+    // Guide user to change permission settings manually if permanently denied
+    showPermissionPermanentlyDeniedDialog(context);
+  } else {
+    print("Exact alarm permission status: $status");
+  }
+}
+
+void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
+  if (schedule.isAlarm) {
+    if (alarmTimeTextFieldControllers.text.isEmpty) {
+      showWarningDialog(context, "Please enter the alarm time.");
+      return;
+    }
+    try {
+      int alarmTimeInMinutes = int.parse(alarmTimeTextFieldControllers.text);
+      DateTime alarmTime = schedule.getAlarmTime(alarmTimeInMinutes); // Call getAlarmTime
+      print("Scheduled alarm time: $alarmTime");
+
+      String alarmId = generateScheduleId(schedule);
+
+      NotificationDetails details = const NotificationDetails(
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+        android: AndroidNotificationDetails(
+          'schedule_channel_id',
+          'Schedule Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      );
+
+      // Schedule notification
+      try {
+        await flutterLocalNotificationsPlugin.show(
+          0,
+          "Title area to be displayed",
+          "Content area to be displayed.\ntest show()",
+          details,
+          payload: "tyger://",
+        );
+
+        await flutterLocalNotificationsPlugin.zonedSchedule(
+          alarmId.hashCode,
+          schedule.name,
+          schedule.explanation,
+          tz.TZDateTime.from(alarmTime, tz.local),
+          details,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
+        print("Notification successfully scheduled.");
+      } catch (e) {
+        print("Error occurred while scheduling notification: $e");
+      }
+    } catch (e) {
+      showWarningDialog(context, "Please enter a valid alarm time.");
+      print("Error parsing alarm time: $e");
+    }
+  } else {
+    cancelAlarm(schedule);
+  }
+}
+
+void cancelAlarm(ScheduleData schedule) async {
+  String alarmId = generateScheduleId(schedule);
+  await flutterLocalNotificationsPlugin.cancel(alarmId.hashCode);
+}
+
+void initialization() async {
   minTimeMin = minTime * 60;
   maxTimeMin = maxTimeMin * 60;
   weekBtnHight = ((weekContainerSizeY - weekInfoSizeY) / (maxTime - minTime));
@@ -138,6 +254,19 @@ void firstSetting() {
     weekContainerSizeX *= 1.5;
     realContainerSizeX /= 1.4;
   }
+
+  AndroidInitializationSettings android =
+      const AndroidInitializationSettings("@mipmap/ic_launcher");
+  DarwinInitializationSettings ios = const DarwinInitializationSettings(
+    requestSoundPermission: false,
+    requestBadgePermission: false,
+    requestAlertPermission: false,
+  );
+  InitializationSettings settings =
+      InitializationSettings(android: android, iOS: ios);
+  await flutterLocalNotificationsPlugin.initialize(settings);
+
+  firstRequestExactAlarmPermission();
 }
 
 void updateHomeWidget() async {
@@ -180,16 +309,6 @@ void applyNowSchedule(BuildContext context) {
     ..endTime = endTimeInMinutes
     ..btnColor = colorButtonColor.value;
 
-  // Handle alarm time and isAlarm flag
-  try {
-    nowSchedule.alarmTime = int.parse(alarmTimeTextFieldControllers.text);
-  } catch (e) {
-    showWarningDialog(context, "Invalid alarm time input.");
-    return;
-  }
-
-  nowSchedule.isAlarm = alarmToggleFlag.value;
-
   // Add or update the schedule depending on whether it's a new schedule or not
   if (isNewSchedule.value) {
     scheduleDataList[nowWeekIndex].scheduleInfo.add(nowSchedule);
@@ -202,6 +321,22 @@ void applyNowSchedule(BuildContext context) {
   }
 
   scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
+
+  // Handle alarm time and isAlarm flag
+  try {
+    nowSchedule.alarmTime = int.parse(alarmTimeTextFieldControllers.text);
+  } catch (e) {
+    showWarningDialog(context, "Invalid alarm time input.");
+    return;
+  }
+  nowSchedule.isAlarm = alarmToggleFlag.value;
+
+  if (nowSchedule.isAlarm) {
+    //reqest permision
+    requestExactAlarmPermission(context, nowSchedule);
+  } else {
+    cancelAlarm(getNowScheduleData());
+  }
 
   syncData();
 
@@ -237,23 +372,24 @@ class _MainAppState extends State<MainApp> {
     super.initState();
     HomeWidget.widgetClicked.listen((Uri? uri) => loadData());
     loadData();
+    firstRequestExactAlarmPermission();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        brightness: Brightness.dark, // 다크 모드 유지
+        brightness: Brightness.dark,
         scaffoldBackgroundColor:
-            const Color.fromARGB(255, 10, 10, 10), // 배경 검은색
-        primaryColor: Color.fromARGB(255, 210, 210, 210), // 기본 색상 흰색으로 설정
+            const Color.fromARGB(255, 10, 10, 10),
+        primaryColor: Color.fromARGB(255, 210, 210, 210),
         colorScheme: const ColorScheme.dark(
-          primary: Color.fromARGB(255, 210, 210, 210), // 주요 색상을 흰색으로
-          secondary: Color.fromARGB(255, 210, 210, 210), // 보조 색상도 흰색으로
-          surface: Color.fromARGB(255, 50, 50, 50), // 배경 검은색
-          onPrimary: Colors.black, // primary 위의 글자색 (반전된 색상)
-          onSecondary: Colors.black, // secondary 위의 글자색
-          onSurface: Colors.white, // 기본 글자색을 흰색으로
+          primary: Color.fromARGB(255, 210, 210, 210),
+          secondary: Color.fromARGB(255, 210, 210, 210),
+          surface: Color.fromARGB(255, 50, 50, 50),
+          onPrimary: Colors.black,
+          onSecondary: Colors.black,
+          onSurface: Colors.white,
         ),
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Color.fromARGB(255, 210, 210, 210)),
@@ -355,7 +491,7 @@ class _MainScheduleColumnState extends State<MainScheduleColumn> {
                             children: [
                               for (int i = 0; i < week; i++)
                                 ScheduleBtnColumn(
-                                  index: i,
+                                  weekIndex: i,
                                 )
                             ],
                           );
@@ -404,7 +540,7 @@ class WeekStateBlock extends StatelessWidget {
       }
     }
     return Container(
-      alignment: Alignment.center, // 텍스트를 가운데 정렬
+      alignment: Alignment.center,
       width: weekContainerSizeX / 7,
       height: weekInfoSizeY,
       decoration: BoxDecoration(
