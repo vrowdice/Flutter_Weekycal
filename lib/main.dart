@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
@@ -153,7 +154,8 @@ void firstRequestExactAlarmPermission() async {
   } else if (status.isDenied) {
     print('Exact alarm permission has been denied.');
   } else if (status.isPermanentlyDenied) {
-    print('Exact alarm permission has been permanently denied. You need to change it in the settings.');
+    print(
+        'Exact alarm permission has been permanently denied. You need to change it in the settings.');
   }
 }
 
@@ -188,7 +190,8 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
     }
     try {
       int alarmTimeInMinutes = int.parse(alarmTimeTextFieldControllers.text);
-      DateTime alarmTime = schedule.getAlarmTime(alarmTimeInMinutes); // Call getAlarmTime
+      DateTime alarmTime =
+          schedule.getAlarmTime(alarmTimeInMinutes); // Call getAlarmTime
       print("Scheduled alarm time: $alarmTime");
 
       String alarmId = generateScheduleId(schedule);
@@ -209,24 +212,16 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
 
       // Schedule notification
       try {
-        await flutterLocalNotificationsPlugin.show(
-          0,
-          "Title area to be displayed",
-          "Content area to be displayed.\ntest show()",
-          details,
-          payload: "tyger://",
-        );
-
         await flutterLocalNotificationsPlugin.zonedSchedule(
-          alarmId.hashCode,
-          schedule.name,
-          schedule.explanation,
-          tz.TZDateTime.from(alarmTime, tz.local),
-          details,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-        );
+            alarmId.hashCode,
+            schedule.name,
+            schedule.explanation,
+            tz.TZDateTime.from(alarmTime, tz.local),
+            details,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+            androidScheduleMode: AndroidScheduleMode.alarmClock);
         print("Notification successfully scheduled.");
       } catch (e) {
         print("Error occurred while scheduling notification: $e");
@@ -288,15 +283,17 @@ void applyNowSchedule(BuildContext context) {
 
   // Function to check if the time overlaps with existing schedules
   bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
-    return (scheduleStart < startTimeInMinutes &&
-            scheduleEnd > startTimeInMinutes) ||
+    return (scheduleStart < startTimeInMinutes && scheduleEnd > startTimeInMinutes) ||
         (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
   }
 
   // Check for time overlaps in the existing schedule data
   for (var schedule in scheduleDataList[nowWeekIndex].scheduleInfo) {
+    if (schedule == scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex]) {
+      continue;
+    }
     if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
-      showWarningDialog(context, "The schedule overlaps with an existing one.");
+      showWarningDialog(context, "The time overlaps with an existing schedule.");
       return;
     }
   }
@@ -332,7 +329,6 @@ void applyNowSchedule(BuildContext context) {
   nowSchedule.isAlarm = alarmToggleFlag.value;
 
   if (nowSchedule.isAlarm) {
-    //reqest permision
     requestExactAlarmPermission(context, nowSchedule);
   } else {
     cancelAlarm(getNowScheduleData());
@@ -341,6 +337,17 @@ void applyNowSchedule(BuildContext context) {
   syncData();
 
   updateHomeWidget();
+
+  // Display a success message using a Snackbar
+  Fluttertoast.showToast(
+    msg: "Schedule has been successfully applied!",
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.TOP,
+    timeInSecForIosWeb: 1,
+    backgroundColor: Colors.black,
+    textColor: Colors.white,
+    fontSize: 16.0,
+  );
 }
 
 void deleteNowSchedule() {
@@ -380,8 +387,7 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor:
-            const Color.fromARGB(255, 10, 10, 10),
+        scaffoldBackgroundColor: const Color.fromARGB(255, 10, 10, 10),
         primaryColor: Color.fromARGB(255, 210, 210, 210),
         colorScheme: const ColorScheme.dark(
           primary: Color.fromARGB(255, 210, 210, 210),
