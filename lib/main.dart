@@ -283,17 +283,20 @@ void applyNowSchedule(BuildContext context) {
 
   // Function to check if the time overlaps with existing schedules
   bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
-    return (scheduleStart < startTimeInMinutes && scheduleEnd > startTimeInMinutes) ||
+    return (scheduleStart < startTimeInMinutes &&
+            scheduleEnd > startTimeInMinutes) ||
         (scheduleStart < endTimeInMinutes && scheduleEnd > endTimeInMinutes);
   }
 
   // Check for time overlaps in the existing schedule data
   for (var schedule in scheduleDataList[nowWeekIndex].scheduleInfo) {
-    if (schedule == scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex]) {
+    if (schedule ==
+        scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex]) {
       continue;
     }
     if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
-      showWarningDialog(context, "The time overlaps with an existing schedule.");
+      showWarningDialog(
+          context, "The time overlaps with an existing schedule.");
       return;
     }
   }
@@ -388,7 +391,7 @@ class _MainAppState extends State<MainApp> {
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color.fromARGB(255, 10, 10, 10),
-        primaryColor: Color.fromARGB(255, 210, 210, 210),
+        primaryColor: const Color.fromARGB(255, 210, 210, 210),
         colorScheme: const ColorScheme.dark(
           primary: Color.fromARGB(255, 210, 210, 210),
           secondary: Color.fromARGB(255, 210, 210, 210),
@@ -452,14 +455,14 @@ class _MainScheduleColumnState extends State<MainScheduleColumn> {
           children: [
             SizedBox(
               width: weekTimeSizeX - 35,
-              height: weekContainerSizeY + 20,
+              height: weekContainerSizeY + 30,
               child: Column(
                 children: [
                   SizedBox(
                     width: weekTimeSizeX,
-                    height: weekInfoSizeY - 10,
+                    height: weekInfoSizeY - 5,
                   ),
-                  for (int i = minTime; i < maxTime + 1; i++) TimeText(index: i)
+                  TimeList()
                 ],
               ),
             ),
@@ -515,22 +518,33 @@ class _MainScheduleColumnState extends State<MainScheduleColumn> {
   }
 }
 
-//time text ui
-class TimeText extends StatelessWidget {
-  final int index;
-  const TimeText({super.key, required, required this.index});
-
+class TimeList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    int timeCount = maxTime - minTime + 1;
+    double itemHeight = 15;
+
     return SizedBox(
-      height: (weekContainerSizeY - 41) / (maxTime - minTime) + 0.6,
-      child: Text(
-        '${index.toString()}:00',
-        style: TextStyle(fontSize: 12.0),
+      height: weekContainerSizeY - 20,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(timeCount, (index) {
+          return SizedBox(
+            height: itemHeight,
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                '${minTime + index}:00',
+                style: TextStyle(fontSize: 12.0),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
 }
+
 
 //show week state block
 //no any function without show week

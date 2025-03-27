@@ -4,6 +4,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import 'package:weekycal/main.dart';
 import 'package:weekycal/popup.dart';
+import 'package:weekycal/saveData.dart';
 
 class ScheduleInfoContainer extends StatelessWidget {
   const ScheduleInfoContainer({super.key});
@@ -82,6 +83,17 @@ class ContainerTitleText extends StatefulWidget {
 }
 
 class _ContainerTitleTextState extends State<ContainerTitleText> {
+  String _getScheduleInfo() {
+    if (widget.isNewScheduleNotifier.value) return 'New Schedule Info';
+
+    if (nowWeekIndex < 0) {
+      return 'No Schedule Data';
+    } else {
+      print(nowScheduleIndex.toString() + " " + nowWeekIndex.toString());
+      return scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex].name;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
@@ -89,12 +101,28 @@ class _ContainerTitleTextState extends State<ContainerTitleText> {
       builder: (context, isNewSchedule, child) {
         return SizedBox(
           width: 170,
-          child: Text(
-            isNewSchedule ? "New Schedule Info" : "Schedule Info",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18.0,
-            ),
+          child: Column(
+            children: [
+              if (isNewSchedule) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  "New Schedule Info",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.0,
+                  ),
+                ),
+              ] else ...[
+                Text(_getScheduleInfo()),
+                const Text(
+                  "Schedule Info",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.0,
+                  ),
+                ),
+              ],
+            ],
           ),
         );
       },
@@ -128,7 +156,8 @@ class _ScheduleInfoTextFieldState extends State<ScheduleInfoTextField> {
     }
 
     // textFieldControllers controller will be used
-    TextEditingController controller = scheduleSetTextFieldControllers[widget.index];
+    TextEditingController controller =
+        scheduleSetTextFieldControllers[widget.index];
 
     return Padding(
       padding: const EdgeInsets.all(10),
@@ -174,8 +203,10 @@ class TimePickerColum extends StatefulWidget {
 }
 
 class _TimePickerColumState extends State<TimePickerColum> {
-  Color startTimeButtonColor = const Color.fromARGB(255, 252, 252, 252); // Start time button color
-  Color endTimeButtonColor = const Color.fromARGB(255, 0, 0, 0); // End time button color
+  Color startTimeButtonColor =
+      const Color.fromARGB(255, 252, 252, 252); // Start time button color
+  Color endTimeButtonColor =
+      const Color.fromARGB(255, 0, 0, 0); // End time button color
 
   @override
   Widget build(BuildContext context) {
@@ -360,7 +391,7 @@ class _ButtonColorPickerRowState extends State<ButtonColorPickerRow> {
           "Button Color: ",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        // ValueListenableBuilder change colorButtonColor value 
+        // ValueListenableBuilder change colorButtonColor value
         ValueListenableBuilder<Color>(
           valueListenable: colorButtonColor,
           builder: (context, color, child) {
@@ -414,8 +445,7 @@ class AlarmToggle extends StatefulWidget {
 }
 
 class _AlarmToggleState extends State<AlarmToggle> {
-  final TextEditingController _timeController =
-      alarmTimeTextFieldControllers;
+  final TextEditingController _timeController = alarmTimeTextFieldControllers;
 
   @override
   Widget build(BuildContext context) {
@@ -465,7 +495,6 @@ class _AlarmToggleState extends State<AlarmToggle> {
     );
   }
 }
-
 
 // Color Picker Dialog widget
 class ColorPickerDialog extends StatelessWidget {
