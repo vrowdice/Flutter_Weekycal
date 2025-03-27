@@ -38,46 +38,37 @@ companion object {
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_layout)
 
-            // 앱 실행 버튼
             val pendingIntent = HomeWidgetLaunchIntent.getActivity(
                 context,
                 MainActivity::class.java
             )
             views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
-            // 저장된 일정 데이터 가져오기
             val scheduleJson = widgetData.getString(SCHEDULE_DATA_KEY, "[]") ?: "[]"
             val weekList = parseScheduleData(scheduleJson)
             
-            // 주별로 첫 번째 주의 일정만 표시 (7일의 일정)
             for (dayIndex in 0 until 7) {
                 val daySchedule = weekList.getOrNull(dayIndex)
                 
-                // 일정이 있을 경우 텍스트 설정
                 if (daySchedule != null && daySchedule.schedules.isNotEmpty()) {
                     var text = "\n "
                     
-                    // 해당 일에 대한 모든 일정 합치기
                     for (schedule in daySchedule.schedules) {
                         text += "${schedule.name}\n"
                         
-                        // 시작 시간과 종료 시간을 시:분 형식으로 변환
                         val startTimeFormatted = convertMinutesToTime(schedule.startTime)
                         val endTimeFormatted = convertMinutesToTime(schedule.endTime)
                         
                         text += "$startTimeFormatted ~ $endTimeFormatted\n"
                     }
                     
-                    // 하나의 TextView에 모든 일정 표시
                     views.setTextViewText(getScheduleNameViewId(dayIndex), text.trim())
                     views.setViewVisibility(getScheduleNameViewId(dayIndex), View.VISIBLE)
                 } else {
-                    // 일정이 없으면 숨기기
                     views.setViewVisibility(getScheduleNameViewId(dayIndex), View.GONE)
                 }
             }
 
-            // 새로고침 버튼
             val refreshIntent = HomeWidgetBackgroundIntent.getBroadcast(
                 context,
                 Uri.parse("myAppWidget://refreshSchedule")
@@ -134,7 +125,6 @@ companion object {
         return scheduleList
     }
 
-    // 일정 데이터 클래스
     data class ScheduleData(
         val schedules: List<Schedule> = emptyList()
     )
