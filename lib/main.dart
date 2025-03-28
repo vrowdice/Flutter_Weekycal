@@ -102,9 +102,7 @@ Future<void> main() async {
   );
 
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
   tz.initializeTimeZones();
-
   WidgetsFlutterBinding.ensureInitialized();
   await loadData();
   //home widget activate
@@ -147,18 +145,6 @@ ScheduleData getNowScheduleData() {
   return scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex];
 }
 
-void firstRequestExactAlarmPermission() async {
-  final status = await Permission.scheduleExactAlarm.request();
-  if (status.isGranted) {
-    print('Exact alarm permission has been granted.');
-  } else if (status.isDenied) {
-    print('Exact alarm permission has been denied.');
-  } else if (status.isPermanentlyDenied) {
-    print(
-        'Exact alarm permission has been permanently denied. You need to change it in the settings.');
-  }
-}
-
 void requestExactAlarmPermission(
     BuildContext context, ScheduleData argScheduelData) async {
   print("Requesting exact alarm permission...");
@@ -182,46 +168,69 @@ void requestExactAlarmPermission(
   }
 }
 
+void showSimpleNotification({
+  required String title,
+  required String body,
+  required String payload,
+}) async {
+  const AndroidNotificationDetails androidNotificationDetails =
+      AndroidNotificationDetails('channel 1', 'channel 1 name',
+          channelDescription: 'channel 1 description',
+          importance: Importance.max,
+          priority: Priority.high,
+          ticker: 'ticker');
+  const NotificationDetails notificationDetails =
+      NotificationDetails(android: androidNotificationDetails);
+  await flutterLocalNotificationsPlugin
+      .show(0, title, body, notificationDetails, payload: payload);
+}
+
 void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
   if (schedule.isAlarm) {
     if (alarmTimeTextFieldControllers.text.isEmpty) {
       showWarningDialog(context, "Please enter the alarm time.");
       return;
     }
+
     try {
+      // Parse the alarm time from the text field
       int alarmTimeInMinutes = int.parse(alarmTimeTextFieldControllers.text);
-      DateTime alarmTime =
-          schedule.getAlarmTime(alarmTimeInMinutes); // Call getAlarmTime
+      DateTime alarmTime = schedule.getAlarmTime(alarmTimeInMinutes);
       print("Scheduled alarm time: $alarmTime");
 
+      // Generate the unique alarm ID
       String alarmId = generateScheduleId(schedule);
 
+      // Notification details
       NotificationDetails details = const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'schedule channel id',
+          'schedule notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+          fullScreenIntent: true,
+          ticker: 'ticker'
+          // Set PendingIntent flag for Android API 31 and above
+        ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
         ),
-        android: AndroidNotificationDetails(
-          'schedule_channel_id',
-          'Schedule Notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
       );
 
-      // Schedule notification
+      // Schedule notification with exact time
       try {
         await flutterLocalNotificationsPlugin.zonedSchedule(
-            alarmId.hashCode,
-            schedule.name,
-            schedule.explanation,
-            tz.TZDateTime.from(alarmTime, tz.local),
-            details,
-            uiLocalNotificationDateInterpretation:
-                UILocalNotificationDateInterpretation.absoluteTime,
-            matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-            androidScheduleMode: AndroidScheduleMode.alarmClock);
+          alarmId.hashCode,
+          schedule.name,
+          schedule.explanation,
+          tz.TZDateTime.from(alarmTime, tz.local),
+          details,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
         print("Notification successfully scheduled.");
       } catch (e) {
         print("Error occurred while scheduling notification: $e");
@@ -231,7 +240,7 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
       print("Error parsing alarm time: $e");
     }
   } else {
-    cancelAlarm(schedule);
+    cancelAlarm(schedule); // Handle cancellation if necessary
   }
 }
 
@@ -260,8 +269,6 @@ void initialization() async {
   InitializationSettings settings =
       InitializationSettings(android: android, iOS: ios);
   await flutterLocalNotificationsPlugin.initialize(settings);
-
-  firstRequestExactAlarmPermission();
 }
 
 void updateHomeWidget() async {
@@ -281,6 +288,38 @@ void applyNowSchedule(BuildContext context) {
   final endTimeInMinutes =
       endTimeNotifier.value.hour * 60 + endTimeNotifier.value.minute;
 
+  // Validate start and end time for the same rules as time picker
+  if (startTimeNotifier.value.hour < 6 || startTimeNotifier.value.hour >= 24) {
+    showWarningDialog(context, 'Start Time must be between 6 AM and 12 AM.');
+    return;
+  }
+
+  if (endTimeNotifier.value.hour < 6 || endTimeNotifier.value.hour >= 24) {
+    showWarningDialog(context, 'End Time must be between 6 AM and 12 AM.');
+    return;
+  }
+
+  if (endTimeNotifier.value.hour < startTimeNotifier.value.hour ||
+      (endTimeNotifier.value.hour == startTimeNotifier.value.hour &&
+          endTimeNotifier.value.minute <= startTimeNotifier.value.minute)) {
+    showWarningDialog(context, 'End Time cannot be earlier than Start Time.');
+    return;
+  }
+
+  // Check if the time difference is less than 30 minutes
+  final Duration duration = Duration(
+    hours: endTimeNotifier.value.hour - startTimeNotifier.value.hour,
+    minutes: endTimeNotifier.value.minute - startTimeNotifier.value.minute,
+  );
+
+  if (duration.inMinutes < 30) {
+    showWarningDialog(
+      context,
+      'The time difference between Start and End must be at least 30 minutes.',
+    );
+    return;
+  }
+
   // Function to check if the time overlaps with existing schedules
   bool isTimeOverlap(int scheduleStart, int scheduleEnd) {
     return (scheduleStart < startTimeInMinutes &&
@@ -290,8 +329,10 @@ void applyNowSchedule(BuildContext context) {
 
   // Check for time overlaps in the existing schedule data
   for (var schedule in scheduleDataList[nowWeekIndex].scheduleInfo) {
-    if (schedule ==
-        scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex]) {
+    // Ensure that nowScheduleIndex is valid (not -1) before comparing
+    if (nowScheduleIndex >= 0 &&
+        schedule ==
+            scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex]) {
       continue;
     }
     if (isTimeOverlap(schedule.startTime, schedule.endTime)) {
@@ -311,13 +352,20 @@ void applyNowSchedule(BuildContext context) {
 
   // Add or update the schedule depending on whether it's a new schedule or not
   if (isNewSchedule.value) {
+    // Add the new schedule
     scheduleDataList[nowWeekIndex].scheduleInfo.add(nowSchedule);
     isNewSchedule.value = false;
+    nowScheduleIndex = scheduleDataList[nowWeekIndex].scheduleInfo.length - 1;
   } else {
     if (nowScheduleIndex < 0) {
       return;
     }
+    // Update the existing schedule
     scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex] = nowSchedule;
+    cancelAlarm(getNowScheduleData());
+
+    isNewSchedule.value = true;
+    isNewSchedule.value = false;
   }
 
   scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
@@ -360,6 +408,7 @@ void deleteNowSchedule() {
     return;
   }
 
+  cancelAlarm(getNowScheduleData());
   scheduleDataList[nowWeekIndex].scheduleInfo.removeAt(nowScheduleIndex);
   scheduleDataList[nowWeekIndex].sortSchedulesByStartTime();
   isNewSchedule.value = true;
@@ -367,6 +416,8 @@ void deleteNowSchedule() {
   syncData();
 
   updateHomeWidget();
+
+
 }
 
 class MainApp extends StatefulWidget {
@@ -382,7 +433,6 @@ class _MainAppState extends State<MainApp> {
     super.initState();
     HomeWidget.widgetClicked.listen((Uri? uri) => loadData());
     loadData();
-    firstRequestExactAlarmPermission();
   }
 
   @override
@@ -425,6 +475,8 @@ class _MainAppState extends State<MainApp> {
                 ScheduleInfoContainer(),
               ],
             ),
+            Positioned(top: 15, left: 15, child: ResetBtn()),
+            Positioned(top: 15, left: 60, child: AlarmTmp()),
             Positioned(top: 15, right: 105, child: SaveBtn()),
             Positioned(top: 15, right: 60, child: LoadBtn()),
             Positioned(top: 15, right: 15, child: OptionBtn()),
@@ -525,7 +577,7 @@ class TimeList extends StatelessWidget {
     double itemHeight = 15;
 
     return SizedBox(
-      height: weekContainerSizeY - 20,
+      height: weekContainerSizeY - 18,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(timeCount, (index) {
@@ -544,7 +596,6 @@ class TimeList extends StatelessWidget {
     );
   }
 }
-
 
 //show week state block
 //no any function without show week

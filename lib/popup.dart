@@ -81,24 +81,3 @@ void showPermissionPermanentlyDeniedDialog(BuildContext context) {
     },
   );
 }
-
-void _navigateToAppSettings() async {
-  if (await openAppSettings()) {
-    print('The settings screen has been opened.');
-    // Since the user may have changed the settings, you can add logic to check the permission status again if needed.
-  } else {
-    print('Could not open the settings screen.');
-    // Handle the case where the settings screen could not be opened
-  }
-}
-
-// For example, you can use this button to navigate to the settings screen when clicked.
-class OpenSettingsButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: _navigateToAppSettings,
-      child: Text('Open App Settings'),
-    );
-  }
-}

@@ -124,7 +124,8 @@ class _ScheduleBtnState extends State<ScheduleBtn> {
             endTimeNotifier.value = TimeOfDay(
                 hour: schedule.endTime ~/ 60, minute: schedule.endTime % 60);
             colorButtonColor.value = btnColor;
-
+            
+            isNewSchedule.value = true; //valueNotifier active
             isNewSchedule.value = false;
           });
         },

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:weekycal/main.dart';
 
 import 'saveData.dart';
+import 'dataClass.dart';
 
 //main window save button and function
 class SaveBtn extends StatefulWidget {
@@ -147,7 +149,8 @@ class _LoadBtnState extends State<LoadBtn> {
                         padding: const EdgeInsets.all(5),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(255, 40, 40, 40),
+                            backgroundColor:
+                                const Color.fromARGB(255, 40, 40, 40),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(0),
                             ),
@@ -236,6 +239,90 @@ class _LoadBtnState extends State<LoadBtn> {
           size: 30,
         ),
         onPressed: () => _showOptionsDialog(context),
+      ),
+    );
+  }
+}
+
+//reset button generate
+class ResetBtn extends StatefulWidget {
+  const ResetBtn({super.key});
+
+  @override
+  _ResetBtnState createState() => _ResetBtnState();
+}
+
+class _ResetBtnState extends State<ResetBtn> {
+  void showResetConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Reset Confirmation"),
+          content: const Text("Are you sure you want to reset the list?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Cancel button: Close the dialog
+                Navigator.of(context).pop();
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                // Confirm button: Reset the list and close the dialog
+                setState(() {
+                  scheduleDataList = List.generate(7, (_) => WeekData());
+
+                  syncData();
+                });
+                Navigator.of(context).pop();
+              },
+              child: const Text("Confirm"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 50,
+      height: 50,
+      child: IconButton(
+        icon: const Icon(
+          Icons.loop,
+          size: 30,
+        ),
+        onPressed: () => showResetConfirmationDialog(context), // Open confirmation dialog
+      ),
+    );
+  }
+}
+
+class AlarmTmp extends StatefulWidget {
+  const AlarmTmp({super.key});
+
+  @override
+  State<AlarmTmp> createState() => _AlarmTmpState();
+}
+
+class _AlarmTmpState extends State<AlarmTmp> {
+  @override
+  Widget build(BuildContext context) {
+        return SizedBox(
+      width: 50,
+      height: 50,
+      child: IconButton(
+        icon: const Icon(
+          Icons.loop,
+          size: 30,
+        ),
+        onPressed: () {
+          showSimpleNotification(title: '1', body: '1', payload: '1');
+        }
       ),
     );
   }

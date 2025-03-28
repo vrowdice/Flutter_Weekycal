@@ -89,7 +89,6 @@ class _ContainerTitleTextState extends State<ContainerTitleText> {
     if (nowWeekIndex < 0) {
       return 'No Schedule Data';
     } else {
-      print(nowScheduleIndex.toString() + " " + nowWeekIndex.toString());
       return scheduleDataList[nowWeekIndex].scheduleInfo[nowScheduleIndex].name;
     }
   }
@@ -280,17 +279,6 @@ class _TimePickerColumState extends State<TimePickerColum> {
                   showWarningDialog(
                     context,
                     'Please select a time between 6 AM and 12 AM.',
-                  );
-                  return;
-                }
-
-                if (pickedEndTime.hour < startTimeNotifier.value.hour ||
-                    (pickedEndTime.hour == startTimeNotifier.value.hour &&
-                        pickedEndTime.minute <=
-                            startTimeNotifier.value.minute)) {
-                  showWarningDialog(
-                    context,
-                    'End Time cannot be earlier than Start Time.',
                   );
                   return;
                 }
