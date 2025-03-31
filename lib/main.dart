@@ -206,7 +206,6 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
             'schedule channel id', 'schedule notifications',
             importance: Importance.max,
             priority: Priority.high,
-            fullScreenIntent: true,
             ticker: 'ticker'
             // Set PendingIntent flag for Android API 31 and above
             ),
@@ -227,7 +226,6 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
           details,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
         );
         print("Notification successfully scheduled.");
       } catch (e) {
