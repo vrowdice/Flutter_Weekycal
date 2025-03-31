@@ -6,7 +6,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
@@ -152,19 +151,19 @@ void requestExactAlarmPermission(
       .request(); // Requesting notification permission
 
   if (status.isGranted) {
-    print("Exact alarm permission granted.");
+    showSnackBarPopup("Exact alarm permission granted.");
     setAlarmForSchedule(
         argScheduelData, context); // Set alarm if permission is granted
   } else if (status.isDenied) {
-    print("Exact alarm permission denied.");
+    showSnackBarPopup("Exact alarm permission denied.");
     // Show dialog to inform the user that the permission is required
     showPermissionDeniedDialog(context);
   } else if (status.isPermanentlyDenied) {
-    print("Exact alarm permission permanently denied.");
+    showSnackBarPopup("Exact alarm permission permanently denied.");
     // Guide user to change permission settings manually if permanently denied
     showPermissionPermanentlyDeniedDialog(context);
   } else {
-    print("Exact alarm permission status: $status");
+    showSnackBarPopup("Exact alarm permission status: $status");
   }
 }
 
@@ -204,14 +203,13 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
       // Notification details
       NotificationDetails details = const NotificationDetails(
         android: AndroidNotificationDetails(
-          'schedule channel id',
-          'schedule notifications',
-          importance: Importance.max,
-          priority: Priority.high,
-          fullScreenIntent: true,
-          ticker: 'ticker'
-          // Set PendingIntent flag for Android API 31 and above
-        ),
+            'schedule channel id', 'schedule notifications',
+            importance: Importance.max,
+            priority: Priority.high,
+            fullScreenIntent: true,
+            ticker: 'ticker'
+            // Set PendingIntent flag for Android API 31 and above
+            ),
         iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
@@ -386,19 +384,9 @@ void applyNowSchedule(BuildContext context) {
   }
 
   syncData();
-
   updateHomeWidget();
 
-  // Display a success message using a Snackbar
-  Fluttertoast.showToast(
-    msg: "Schedule has been successfully applied!",
-    toastLength: Toast.LENGTH_SHORT,
-    gravity: ToastGravity.TOP,
-    timeInSecForIosWeb: 1,
-    backgroundColor: Colors.black,
-    textColor: Colors.white,
-    fontSize: 16.0,
-  );
+  showSnackBarPopup("Schedule has been successfully applied!");
 }
 
 void deleteNowSchedule() {
@@ -416,8 +404,6 @@ void deleteNowSchedule() {
   syncData();
 
   updateHomeWidget();
-
-
 }
 
 class MainApp extends StatefulWidget {
@@ -487,6 +473,7 @@ class _MainAppState extends State<MainApp> {
   }
 }
 
+//week text and time text, all schadule info button
 class MainScheduleColumn extends StatefulWidget {
   const MainScheduleColumn({super.key});
 
@@ -587,7 +574,7 @@ class TimeList extends StatelessWidget {
               alignment: Alignment.topLeft,
               child: Text(
                 '${minTime + index}:00',
-                style: TextStyle(fontSize: 12.0),
+                style: const TextStyle(fontSize: 12.0),
               ),
             ),
           );

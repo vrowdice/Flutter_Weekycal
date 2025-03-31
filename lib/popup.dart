@@ -1,5 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+void showSnackBarPopup(String argText){
+    // Display a success message using a Snackbar
+  Fluttertoast.showToast(
+    msg: argText,
+    toastLength: Toast.LENGTH_SHORT,
+    gravity: ToastGravity.TOP,
+    timeInSecForIosWeb: 1,
+    backgroundColor: Colors.black,
+    textColor: Colors.white,
+    fontSize: 16.0,
+  );
+}
 
 // warning dialog met
 void showWarningDialog(BuildContext context, String message) {
