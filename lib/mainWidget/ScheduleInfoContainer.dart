@@ -12,7 +12,7 @@ class ScheduleInfoContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        width: realContainerSizeX + 65,
+        width: realContainerSizeX + 60,
         height: weekContainerSizeY / 2,
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 43, 43, 43),
@@ -320,7 +320,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
       Padding(
         padding: const EdgeInsets.all(5),
         child: SizedBox(
-            width: realContainerSizeX / 4 + 5,
+            width: realContainerSizeX / 4,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
               onPressed: () {
@@ -341,7 +341,7 @@ class _ScheduleControlRowState extends State<ScheduleControlRow> {
       Padding(
         padding: const EdgeInsets.all(5),
         child: SizedBox(
-            width: realContainerSizeX / 4 + 5,
+            width: realContainerSizeX / 4,
             height: weekContainerSizeY / 11,
             child: ElevatedButton(
                 onPressed: () {
