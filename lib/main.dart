@@ -6,6 +6,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'package:android_intent_plus/flag.dart';
 
 import 'dataClass.dart';
 import 'converter.dart';
@@ -91,8 +93,6 @@ final ValueNotifier<Color> colorButtonColor =
     ValueNotifier<Color>(Colors.white);
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -147,24 +147,31 @@ ScheduleData getNowScheduleData() {
 void requestExactAlarmPermission(
     BuildContext context, ScheduleData argScheduelData) async {
   print("Requesting exact alarm permission...");
-  final status = await Permission.notification
-      .request(); // Requesting notification permission
+  final status = await Permission.notification.request(); // Requesting notification permission
 
   if (status.isGranted) {
     showSnackBarPopup("Exact alarm permission granted.");
-    setAlarmForSchedule(
-        argScheduelData, context); // Set alarm if permission is granted
+    requestIgnoreBatteryOptimizations(context);
+    setAlarmForSchedule(argScheduelData, context); // Set alarm if permission is granted
   } else if (status.isDenied) {
     showSnackBarPopup("Exact alarm permission denied.");
-    // Show dialog to inform the user that the permission is required
     showPermissionDeniedDialog(context);
   } else if (status.isPermanentlyDenied) {
     showSnackBarPopup("Exact alarm permission permanently denied.");
-    // Guide user to change permission settings manually if permanently denied
     showPermissionPermanentlyDeniedDialog(context);
   } else {
     showSnackBarPopup("Exact alarm permission status: $status");
   }
+}
+
+void requestIgnoreBatteryOptimizations(BuildContext context) async {
+  final intent = AndroidIntent(
+    action: 'android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+    data: 'package:com.example.weekycal',
+    flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
+  );
+  await intent.launch();
+  showSnackBarPopup("Please disable battery optimizations for proper alarm functionality.");
 }
 
 void showSimpleNotification({
@@ -224,6 +231,7 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
           schedule.explanation,
           tz.TZDateTime.from(alarmTime, tz.local),
           details,
+          androidAllowWhileIdle: true,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
