@@ -45,17 +45,17 @@ void showPermissionDeniedDialog(BuildContext context) {
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text('Exact Alarm Permission Required'),
-        content: Text('To use the exact alarm feature, you must grant the exact alarm permission. You can change the permission in the settings.'),
+        title: const Text('Exact Alarm Permission Required'),
+        content: const Text('To use the exact alarm feature, you must grant the exact alarm permission. You can change the permission in the settings.'),
         actions: <Widget>[
           TextButton(
-            child: Text('Close'),
+            child: const Text('Close'),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
           TextButton(
-            child: Text('Go to Settings'),
+            child: const Text('Go to Settings'),
             onPressed: () {
               openAppSettings();
               Navigator.of(context).pop();
@@ -74,17 +74,17 @@ void showPermissionPermanentlyDeniedDialog(BuildContext context) {
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text('Exact Alarm Permission Required'),
-        content: Text('To use the exact alarm feature, you must enable the exact alarm permission in your device settings.'),
+        title: const Text('Exact Alarm Permission Required'),
+        content: const Text('To use the exact alarm feature, you must enable the exact alarm permission in your device settings.'),
         actions: <Widget>[
           TextButton(
-            child: Text('OK'),
+            child: const Text('OK'),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
           TextButton(
-            child: Text('Open Settings'),
+            child: const Text('Open Settings'),
             onPressed: () {
               openAppSettings();
               Navigator.of(context).pop();

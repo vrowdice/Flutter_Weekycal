@@ -94,9 +94,9 @@ final ValueNotifier<Color> colorButtonColor =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   await loadData();
   initialization();
-  tz.initializeTimeZones();
 
   //home widget activate
   await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")

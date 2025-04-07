@@ -1,0 +1,3 @@
+-keep class com.example.weekycal.notification.** { *; }
+-keep class com.example.weekycal.notification.MyReceiver extends android.content.BroadcastReceiver { *; }
+-keep class com.example.weekycal.notification.MyFirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService { *; }
