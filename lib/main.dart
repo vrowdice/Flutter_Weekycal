@@ -35,8 +35,8 @@ double weekTimeSizeY = 450.0;
 double weekContainerSizeX = 290.0;
 double weekContainerSizeY = 400.0;
 double weekInfoSizeY = 30.0;
-double weekBtnHight = 0.0;
-double weekBtnHightForMin = 0.0;
+double weekBtnHight = 20.0;
+double weekBtnHightForMin = 20.0;
 double realContainerSizeX = weekContainerSizeX;
 
 //textfield size
@@ -93,22 +93,25 @@ final ValueNotifier<Color> colorButtonColor =
     ValueNotifier<Color>(Colors.white);
 
 Future<void> main() async {
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-  );
-
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  tz.initializeTimeZones();
   WidgetsFlutterBinding.ensureInitialized();
   await loadData();
+  initialization();
+  tz.initializeTimeZones();
+
   //home widget activate
   await HomeWidget.getWidgetData<String>(dataID, defaultValue: "None")
       .then((String? value) {});
 
-  initialization();
+  AndroidInitializationSettings android =
+      const AndroidInitializationSettings("@mipmap/ic_launcher");
+  DarwinInitializationSettings ios = const DarwinInitializationSettings(
+    requestSoundPermission: false,
+    requestBadgePermission: false,
+    requestAlertPermission: false,
+  );
+  InitializationSettings settings =
+      InitializationSettings(android: android, iOS: ios);
+  await flutterLocalNotificationsPlugin.initialize(settings);
 
   runApp(const MainApp());
 }
@@ -147,12 +150,14 @@ ScheduleData getNowScheduleData() {
 void requestExactAlarmPermission(
     BuildContext context, ScheduleData argScheduelData) async {
   print("Requesting exact alarm permission...");
-  final status = await Permission.notification.request(); // Requesting notification permission
+  final status = await Permission.notification
+      .request(); // Requesting notification permission
 
   if (status.isGranted) {
     showSnackBarPopup("Exact alarm permission granted.");
     requestIgnoreBatteryOptimizations(context);
-    setAlarmForSchedule(argScheduelData, context); // Set alarm if permission is granted
+    setAlarmForSchedule(
+        argScheduelData, context); // Set alarm if permission is granted
   } else if (status.isDenied) {
     showSnackBarPopup("Exact alarm permission denied.");
     showPermissionDeniedDialog(context);
@@ -171,7 +176,8 @@ void requestIgnoreBatteryOptimizations(BuildContext context) async {
     flags: <int>[Flag.FLAG_ACTIVITY_NEW_TASK],
   );
   await intent.launch();
-  showSnackBarPopup("Please disable battery optimizations for proper alarm functionality.");
+  showSnackBarPopup(
+      "Please disable battery optimizations for proper alarm functionality.");
 }
 
 void showSimpleNotification({
@@ -231,7 +237,7 @@ void setAlarmForSchedule(ScheduleData schedule, BuildContext context) async {
           schedule.explanation,
           tz.TZDateTime.from(alarmTime, tz.local),
           details,
-          androidAllowWhileIdle: true,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:
               UILocalNotificationDateInterpretation.absoluteTime,
         );
@@ -262,17 +268,6 @@ void initialization() async {
     weekContainerSizeX *= 1.5;
     realContainerSizeX /= 1.4;
   }
-
-  AndroidInitializationSettings android =
-      const AndroidInitializationSettings("@mipmap/ic_launcher");
-  DarwinInitializationSettings ios = const DarwinInitializationSettings(
-    requestSoundPermission: false,
-    requestBadgePermission: false,
-    requestAlertPermission: false,
-  );
-  InitializationSettings settings =
-      InitializationSettings(android: android, iOS: ios);
-  await flutterLocalNotificationsPlugin.initialize(settings);
 }
 
 void updateHomeWidget() async {
